@@ -66,14 +66,27 @@ export default function AccountPage() {
     if (url) window.location.href = url;
   };
 
+  const [planLoading, setPlanLoading] = useState(null);
+
   const changePlan = async (plan) => {
-    const res = await fetch('/api/stripe/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan }),
-    });
-    const { url } = await res.json();
-    if (url) window.location.href = url;
+    setPlanLoading(plan);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Erreur Stripe. Verifie tes cles API dans Vercel.');
+        setPlanLoading(null);
+      }
+    } catch (err) {
+      alert('Erreur de connexion a Stripe');
+      setPlanLoading(null);
+    }
   };
 
   if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
@@ -112,12 +125,12 @@ export default function AccountPage() {
               {[
                 { key: 'starter', name: 'Starter', price: '4,99€', desc: '1 compte' },
                 { key: 'pro', name: 'Pro', price: '9,99€', desc: '3 comptes', popular: true },
-                { key: 'unlimited', name: 'Unlimited', price: '19,99€', desc: 'Illimité' },
+                { key: 'unlimited', name: 'Unlimited', price: '19,99€', desc: 'Illimite' },
               ].map(p => (
-                <button key={p.key} onClick={() => changePlan(p.key)}
-                  className={`p-4 rounded-xl border text-left transition-all hover:-translate-y-0.5 ${p.popular ? 'border-accent bg-accent-dim' : 'border-brd hover:border-brd-hover'}`}>
+                <button key={p.key} onClick={() => changePlan(p.key)} disabled={planLoading !== null}
+                  className={`p-4 rounded-xl border text-left transition-all active:scale-95 ${planLoading === p.key ? 'opacity-60' : 'hover:-translate-y-0.5'} ${p.popular ? 'border-accent bg-accent-dim' : 'border-brd hover:border-brd-hover'}`}>
                   <div className="font-display font-bold">{p.name}</div>
-                  <div className="text-xl font-bold font-display">{p.price}<span className="text-txt-2 text-xs">/mois</span></div>
+                  <div className="text-xl font-bold font-display">{planLoading === p.key ? 'Redirection...' : p.price}<span className="text-txt-2 text-xs">{planLoading !== p.key ? '/mois' : ''}</span></div>
                   <div className="text-txt-2 text-xs mt-1">{p.desc}</div>
                 </button>
               ))}

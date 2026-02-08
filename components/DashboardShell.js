@@ -27,7 +27,7 @@ export default function DashboardShell({ user, profile, accounts, children }) {
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push('/');
+    window.location.href = '/';
   };
 
   const currentAccount = accounts[0]; // TODO: gestion multi-comptes avec state
