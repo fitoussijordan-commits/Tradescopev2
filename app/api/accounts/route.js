@@ -65,6 +65,7 @@ export async function PATCH(request) {
       name: body.name,
       prop_firm: body.prop_firm,
       is_burned: body.is_burned,
+      ...(body.base_capital !== undefined && { base_capital: body.base_capital }),
     })
     .eq('id', body.id)
     .eq('user_id', user.id)

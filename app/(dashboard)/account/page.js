@@ -66,6 +66,26 @@ export default function AccountPage() {
     if (url) window.location.href = url;
   };
 
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ name: '', prop_firm: '', base_capital: '' });
+
+  const startEdit = (a) => {
+    setEditingId(a.id);
+    setEditForm({ name: a.name, prop_firm: a.prop_firm, base_capital: a.base_capital });
+  };
+
+  const saveEdit = async (id) => {
+    const res = await fetch('/api/accounts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, name: editForm.name, prop_firm: editForm.prop_firm, base_capital: parseFloat(editForm.base_capital) }),
+    });
+    if (res.ok) { setEditingId(null); loadData(); }
+    else { const d = await res.json(); alert(d.error || 'Erreur'); }
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
   const [planLoading, setPlanLoading] = useState(null);
 
   const changePlan = async (plan) => {
@@ -150,22 +170,53 @@ export default function AccountPage() {
 
         <div className="space-y-3">
           {accounts.map(a => (
-            <div key={a.id} className={`p-4 bg-bg-secondary border border-brd rounded-xl flex justify-between items-center transition-all ${a.is_burned ? 'opacity-50' : 'hover:border-brd-hover'}`}>
-              <div>
-                <div className="font-bold">
-                  {a.name}
-                  {a.is_burned && <span className="ml-2 text-[0.6rem] bg-loss text-white px-1.5 py-0.5 rounded font-bold">GRILLÉ</span>}
+            <div key={a.id} className={`p-4 bg-bg-secondary border border-brd rounded-xl transition-all ${a.is_burned ? 'opacity-50' : 'hover:border-brd-hover'}`}>
+              {editingId === a.id ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-1">Nom</label>
+                      <input type="text" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})}
+                        className="w-full bg-bg-card border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
+                    </div>
+                    <div>
+                      <label className="block text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-1">Prop Firm</label>
+                      <input type="text" value={editForm.prop_firm} onChange={e => setEditForm({...editForm, prop_firm: e.target.value})}
+                        className="w-full bg-bg-card border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
+                    </div>
+                    <div>
+                      <label className="block text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-1">Capital</label>
+                      <input type="number" value={editForm.base_capital} onChange={e => setEditForm({...editForm, base_capital: e.target.value})}
+                        className="w-full bg-bg-card border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => saveEdit(a.id)} className="px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:opacity-90">Sauvegarder</button>
+                    <button onClick={cancelEdit} className="px-4 py-1.5 border border-brd text-txt-2 text-xs rounded-lg hover:border-accent">Annuler</button>
+                  </div>
                 </div>
-                <div className="text-txt-2 text-sm">{a.prop_firm} · {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(a.base_capital)}</div>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => toggleBurn(a)} className={`px-3 py-1.5 border rounded-lg text-xs font-bold transition-all ${a.is_burned ? 'border-profit text-profit hover:bg-profit-dim' : 'border-loss text-loss hover:bg-loss-dim'}`}>
-                  {a.is_burned ? 'Réactiver' : 'Griller'}
-                </button>
-                <button onClick={() => deleteAccount(a.id, a.name)} className="px-3 py-1.5 border border-loss text-loss rounded-lg text-xs font-bold hover:bg-loss-dim transition-all">
-                  ×
-                </button>
-              </div>
+              ) : (
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-bold">
+                      {a.name}
+                      {a.is_burned && <span className="ml-2 text-[0.6rem] bg-loss text-white px-1.5 py-0.5 rounded font-bold">GRILLE</span>}
+                    </div>
+                    <div className="text-txt-2 text-sm">{a.prop_firm} · {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(a.base_capital)}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => startEdit(a)} className="px-3 py-1.5 border border-brd text-txt-2 rounded-lg text-xs font-semibold hover:border-accent hover:text-accent transition-all">
+                      Editer
+                    </button>
+                    <button onClick={() => toggleBurn(a)} className={`px-3 py-1.5 border rounded-lg text-xs font-bold transition-all ${a.is_burned ? 'border-profit text-profit hover:bg-profit-dim' : 'border-loss text-loss hover:bg-loss-dim'}`}>
+                      {a.is_burned ? 'Reactiver' : 'Griller'}
+                    </button>
+                    <button onClick={() => deleteAccount(a.id, a.name)} className="px-3 py-1.5 border border-loss text-loss rounded-lg text-xs font-bold hover:bg-loss-dim transition-all">
+                      x
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
           {accounts.length === 0 && (
