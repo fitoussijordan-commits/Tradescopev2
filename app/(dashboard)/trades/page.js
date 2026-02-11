@@ -63,6 +63,30 @@ export default function TradesPage() {
   const fmt = (v) => (parseFloat(v) >= 0 ? '+' : '') + parseFloat(v).toFixed(2) + '€';
   if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
 
+  const exportCSV = () => {
+    const headers = ['Date','Instrument','Type','Taille','Risque','P&L','R:R','% Capital','Strategie','Notes'];
+    const rows = filtered.map(t => [
+      t.date,
+      t.instrument || '',
+      t.type || '',
+      t.size || '',
+      t.risk || '',
+      t.pnl,
+      t.rr != null ? parseFloat(t.rr).toFixed(2) : '',
+      t.pnl_percent ? parseFloat(t.pnl_percent).toFixed(2) : '',
+      t.followed_strategy ? 'Oui' : 'Non',
+      (t.notes || '').replace(/,/g, ';'),
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tradescope-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="animate-fade-up">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
@@ -76,7 +100,12 @@ export default function TradesPage() {
             ))}
           </div>
         </div>
-        <button onClick={() => setShowModal(true)} className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-lg shadow-lg shadow-accent/25 active:scale-95 transition-all">+ Trade</button>
+        <div className="flex gap-2">
+          {filtered.length > 0 && (
+            <button onClick={exportCSV} className="px-4 py-2.5 bg-bg-card border border-brd text-txt-2 text-sm font-semibold rounded-lg hover:border-accent hover:text-accent active:scale-95 transition-all">CSV ↓</button>
+          )}
+          <button onClick={() => setShowModal(true)} className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-lg shadow-lg shadow-accent/25 active:scale-95 transition-all">+ Trade</button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-5">
