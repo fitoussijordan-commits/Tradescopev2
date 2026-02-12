@@ -99,55 +99,63 @@ function PnLCalendar({ trades, month, year, onPrev, onNext }) {
         </div>
       </div>
 
-      {/* Day detail panel */}
+      {/* Day detail MODAL */}
       {selectedDay && selectedTrades.length > 0 && (
-        <div className="mt-4 bg-bg-card border border-brd rounded-xl overflow-hidden animate-fade-up">
-          <div className="p-4 border-b border-brd flex justify-between items-center">
-            <div>
-              <span className="font-display font-bold text-sm">
-                {new Date(year, month, selectedDay).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </span>
-              <span className="text-txt-3 text-xs font-mono ml-2">
-                {selectedTrades.length} trade{selectedTrades.length > 1 ? 's' : ''}
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className={`font-mono font-bold text-sm ${dayPnl[selectedDay] >= 0 ? 'text-profit' : 'text-loss'}`}>
-                {dayPnl[selectedDay] >= 0 ? '+' : ''}{dayPnl[selectedDay].toFixed(2)}€
-              </span>
-              <button onClick={() => setSelectedDay(null)} className="w-7 h-7 rounded-lg border border-brd text-txt-3 hover:text-txt-1 hover:border-accent transition-all text-xs flex items-center justify-center">✕</button>
-            </div>
-          </div>
-          <div className="divide-y divide-brd">
-            {selectedTrades.map(t => (
-              <div key={t.id} className="px-4 py-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-1.5 h-10 rounded-full flex-shrink-0 ${parseFloat(t.pnl) >= 0 ? 'bg-profit' : 'bg-loss'}`} />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-sm">{t.instrument || '-'}</span>
-                      <span className={`text-[0.55rem] font-bold font-mono px-1.5 py-0.5 rounded ${t.type === 'LONG' ? 'bg-profit/10 text-profit' : 'bg-loss/10 text-loss'}`}>{t.type}</span>
-                      {t.followed_strategy ? <span className="text-profit text-xs">✓ Strat</span> : <span className="text-loss text-[0.6rem]">✗ Strat</span>}
+        <>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200]" onClick={() => setSelectedDay(null)} />
+          <div className="fixed inset-0 z-[201] flex items-center justify-center p-4" onClick={() => setSelectedDay(null)}>
+            <div className="bg-bg-card border border-brd rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="p-5 border-b border-brd flex justify-between items-center">
+                <div>
+                  <h3 className="font-display font-bold text-base">
+                    Trades — {new Date(year, month, selectedDay).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                  </h3>
+                </div>
+                <button onClick={() => setSelectedDay(null)} className="w-8 h-8 rounded-lg border border-brd text-txt-3 hover:text-txt-1 hover:border-accent transition-all text-sm flex items-center justify-center">✕</button>
+              </div>
+
+              <div className="p-5">
+                {/* Summary */}
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  <div className="bg-bg-secondary border border-brd rounded-xl p-3">
+                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">P&L</div>
+                    <div className={`text-xl font-bold font-display ${dayPnl[selectedDay] >= 0 ? 'text-profit' : 'text-loss'}`}>
+                      {dayPnl[selectedDay] >= 0 ? '+' : ''}{dayPnl[selectedDay].toFixed(2)} €
                     </div>
-                    <div className="flex gap-3 mt-0.5 text-[0.65rem] text-txt-3 font-mono">
-                      {t.size && <span>Taille: {t.size}</span>}
-                      {t.risk > 0 && <span>Risque: {parseFloat(t.risk).toFixed(0)}€</span>}
-                      {t.rr != null && <span className={t.rr >= 0 ? 'text-profit' : 'text-loss'}>{parseFloat(t.rr).toFixed(2)}R</span>}
+                  </div>
+                  <div className="bg-bg-secondary border border-brd rounded-xl p-3">
+                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">Trades</div>
+                    <div className="text-xl font-bold font-display">{selectedTrades.length}</div>
+                  </div>
+                  <div className="bg-bg-secondary border border-brd rounded-xl p-3">
+                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">W / L</div>
+                    <div className="text-xl font-bold font-display">
+                      <span className="text-profit">{selectedTrades.filter(t => parseFloat(t.pnl) > 0).length}</span>
+                      <span className="text-txt-3">/</span>
+                      <span className="text-loss">{selectedTrades.filter(t => parseFloat(t.pnl) < 0).length}</span>
                     </div>
-                    {t.notes && <div className="text-[0.65rem] text-txt-2 mt-1">{t.notes}</div>}
                   </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <div className={`font-bold font-mono text-base ${parseFloat(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>
-                    {parseFloat(t.pnl) >= 0 ? '+' : ''}{parseFloat(t.pnl).toFixed(2)}€
-                  </div>
-                  {t.pnl_percent && <div className={`text-[0.6rem] font-mono ${parseFloat(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>{parseFloat(t.pnl_percent).toFixed(2)}%</div>}
-                  {t.trading_view_link && <a href={t.trading_view_link} target="_blank" rel="noopener" className="text-accent text-[0.6rem] font-bold hover:underline">Chart ↗</a>}
+
+                {/* Trade list */}
+                <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                  {selectedTrades.map(t => (
+                    <div key={t.id} className="bg-bg-secondary border border-brd rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="font-bold text-sm">{t.instrument || '-'}</span>
+                        <span className={`text-[0.55rem] font-bold font-mono px-1.5 py-0.5 rounded ${t.type === 'LONG' ? 'bg-profit/15 text-profit' : 'bg-loss/15 text-loss'}`}>{t.type}</span>
+                        {t.size && <span className="text-[0.6rem] text-txt-3 font-mono">{t.size} lots</span>}
+                      </div>
+                      <span className={`font-bold font-mono text-sm flex-shrink-0 ${parseFloat(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>
+                        {parseFloat(t.pnl) >= 0 ? '+' : ''}{parseFloat(t.pnl).toFixed(2)}€
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
