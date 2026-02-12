@@ -3,16 +3,21 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 
 function PnLCalendar({ trades, month, year, onPrev, onNext }) {
+  const [selectedDay, setSelectedDay] = useState(null);
+
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
   const startOffset = firstDay === 0 ? 6 : firstDay - 1;
 
   const dayPnl = {};
+  const dayTrades = {};
   trades.forEach(t => {
     const d = new Date(t.date);
     if (d.getMonth() === month && d.getFullYear() === year) {
       const day = d.getDate();
       dayPnl[day] = (dayPnl[day] || 0) + parseFloat(t.pnl);
+      if (!dayTrades[day]) dayTrades[day] = [];
+      dayTrades[day].push(t);
     }
   });
 
@@ -23,55 +28,127 @@ function PnLCalendar({ trades, month, year, onPrev, onNext }) {
 
   const monthPnl = Object.values(dayPnl).reduce((s, v) => s + v, 0);
   const tradingDays = Object.keys(dayPnl).length;
+  const greenDays = Object.values(dayPnl).filter(v => v > 0).length;
+  const redDays = Object.values(dayPnl).filter(v => v < 0).length;
+
+  const selectedTrades = selectedDay ? (dayTrades[selectedDay] || []) : [];
 
   return (
-    <div className="bg-bg-card border border-brd rounded-xl p-4 md:p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono">Calendrier P&L</h3>
-        <div className="flex items-center gap-3">
-          <button onClick={onPrev} className="w-7 h-7 rounded-lg border border-brd text-txt-2 hover:border-accent hover:text-accent transition-all text-xs flex items-center justify-center">◂</button>
-          <span className="text-sm font-display font-bold min-w-[130px] text-center">{monthNames[month]} {year}</span>
-          <button onClick={onNext} className="w-7 h-7 rounded-lg border border-brd text-txt-2 hover:border-accent hover:text-accent transition-all text-xs flex items-center justify-center">▸</button>
+    <div>
+      <div className="bg-bg-card border border-brd rounded-xl p-4 md:p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="font-display font-bold text-lg">Calendrier P&L</h3>
+            <div className="flex items-center gap-3 mt-1 text-xs text-txt-3 font-mono">
+              <span>{tradingDays} jour{tradingDays > 1 ? 's' : ''}</span>
+              <span className="text-profit">{greenDays} vert{greenDays > 1 ? 's' : ''}</span>
+              <span className="text-loss">{redDays} rouge{redDays > 1 ? 's' : ''}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => { onPrev(); setSelectedDay(null); }} className="w-8 h-8 rounded-lg border border-brd text-txt-2 hover:border-accent hover:text-accent transition-all text-sm flex items-center justify-center">◂</button>
+            <span className="text-sm font-display font-bold min-w-[140px] text-center">{monthNames[month]} {year}</span>
+            <button onClick={() => { onNext(); setSelectedDay(null); }} className="w-8 h-8 rounded-lg border border-brd text-txt-2 hover:border-accent hover:text-accent transition-all text-sm flex items-center justify-center">▸</button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1.5 mb-2">
+          {['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => (
+            <div key={d} className="text-center text-[0.6rem] text-txt-3 font-mono font-bold py-1.5">{d}</div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-1.5">
+          {cells.map((day, i) => {
+            if (day === null) return <div key={`e${i}`} />;
+            const pnl = dayPnl[day];
+            const hasData = pnl !== undefined;
+            const count = dayTrades[day]?.length || 0;
+            const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
+            const isSelected = day === selectedDay;
+            return (
+              <button key={day} onClick={() => hasData ? setSelectedDay(isSelected ? null : day) : null}
+                className={`relative rounded-xl p-1.5 min-h-[56px] md:min-h-[70px] flex flex-col items-center justify-center text-center transition-all
+                ${hasData ? 'cursor-pointer hover:scale-[1.03] active:scale-95' : 'cursor-default'}
+                ${hasData && pnl > 0 ? 'bg-profit/10 border border-profit/20' : ''}
+                ${hasData && pnl < 0 ? 'bg-loss/10 border border-loss/20' : ''}
+                ${hasData && pnl === 0 ? 'bg-bg-secondary border border-brd' : ''}
+                ${!hasData ? 'bg-bg-secondary/30 border border-transparent' : ''}
+                ${isToday ? 'ring-2 ring-accent ring-offset-1 ring-offset-bg-primary' : ''}
+                ${isSelected ? 'ring-2 ring-accent scale-[1.03] shadow-lg' : ''}
+              `}>
+                <span className={`text-xs font-mono ${hasData ? 'font-bold' : 'text-txt-3'}`}>{day}</span>
+                {hasData && (
+                  <>
+                    <span className={`text-[0.65rem] md:text-xs font-mono font-bold mt-0.5 ${pnl > 0 ? 'text-profit' : pnl < 0 ? 'text-loss' : 'text-txt-3'}`}>
+                      {pnl > 0 ? '+' : ''}{Math.abs(pnl) >= 1000 ? `${(pnl/1000).toFixed(1)}k` : pnl.toFixed(0)}€
+                    </span>
+                    <span className="text-[0.45rem] text-txt-3 font-mono mt-0.5">{count} trade{count > 1 ? 's' : ''}</span>
+                  </>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-brd">
+          <span className="text-txt-3 text-xs font-mono">Total du mois</span>
+          <span className={`font-mono font-bold text-lg ${monthPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+            {monthPnl >= 0 ? '+' : ''}{monthPnl.toFixed(2)}€
+          </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => (
-          <div key={d} className="text-center text-[0.55rem] text-txt-3 font-mono font-bold py-1">{d}</div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-1">
-        {cells.map((day, i) => {
-          if (day === null) return <div key={`e${i}`} />;
-          const pnl = dayPnl[day];
-          const hasData = pnl !== undefined;
-          const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
-          return (
-            <div key={day} className={`relative rounded-lg p-1 min-h-[40px] md:min-h-[48px] flex flex-col items-center justify-center text-center transition-all
-              ${hasData && pnl > 0 ? 'bg-profit/10 border border-profit/20' : ''}
-              ${hasData && pnl < 0 ? 'bg-loss/10 border border-loss/20' : ''}
-              ${hasData && pnl === 0 ? 'bg-bg-secondary border border-brd' : ''}
-              ${!hasData ? 'bg-bg-secondary/30' : ''}
-              ${isToday ? 'ring-1 ring-accent' : ''}
-            `}>
-              <span className={`text-[0.65rem] font-mono ${hasData ? 'font-bold' : 'text-txt-3'}`}>{day}</span>
-              {hasData && (
-                <span className={`text-[0.5rem] font-mono font-bold mt-0.5 ${pnl > 0 ? 'text-profit' : pnl < 0 ? 'text-loss' : 'text-txt-3'}`}>
-                  {pnl > 0 ? '+' : ''}{pnl >= 1000 || pnl <= -1000 ? `${(pnl/1000).toFixed(1)}k` : pnl.toFixed(0)}
-                </span>
-              )}
+      {/* Day detail panel */}
+      {selectedDay && selectedTrades.length > 0 && (
+        <div className="mt-4 bg-bg-card border border-brd rounded-xl overflow-hidden animate-fade-up">
+          <div className="p-4 border-b border-brd flex justify-between items-center">
+            <div>
+              <span className="font-display font-bold text-sm">
+                {new Date(year, month, selectedDay).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </span>
+              <span className="text-txt-3 text-xs font-mono ml-2">
+                {selectedTrades.length} trade{selectedTrades.length > 1 ? 's' : ''}
+              </span>
             </div>
-          );
-        })}
-      </div>
-
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-brd text-xs">
-        <span className="text-txt-3 font-mono">{tradingDays} jour{tradingDays > 1 ? 's' : ''} de trading</span>
-        <span className={`font-mono font-bold ${monthPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
-          {monthPnl >= 0 ? '+' : ''}{monthPnl.toFixed(0)}€
-        </span>
-      </div>
+            <div className="flex items-center gap-3">
+              <span className={`font-mono font-bold text-sm ${dayPnl[selectedDay] >= 0 ? 'text-profit' : 'text-loss'}`}>
+                {dayPnl[selectedDay] >= 0 ? '+' : ''}{dayPnl[selectedDay].toFixed(2)}€
+              </span>
+              <button onClick={() => setSelectedDay(null)} className="w-7 h-7 rounded-lg border border-brd text-txt-3 hover:text-txt-1 hover:border-accent transition-all text-xs flex items-center justify-center">✕</button>
+            </div>
+          </div>
+          <div className="divide-y divide-brd">
+            {selectedTrades.map(t => (
+              <div key={t.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-1.5 h-10 rounded-full flex-shrink-0 ${parseFloat(t.pnl) >= 0 ? 'bg-profit' : 'bg-loss'}`} />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-sm">{t.instrument || '-'}</span>
+                      <span className={`text-[0.55rem] font-bold font-mono px-1.5 py-0.5 rounded ${t.type === 'LONG' ? 'bg-profit/10 text-profit' : 'bg-loss/10 text-loss'}`}>{t.type}</span>
+                      {t.followed_strategy ? <span className="text-profit text-xs">✓ Strat</span> : <span className="text-loss text-[0.6rem]">✗ Strat</span>}
+                    </div>
+                    <div className="flex gap-3 mt-0.5 text-[0.65rem] text-txt-3 font-mono">
+                      {t.size && <span>Taille: {t.size}</span>}
+                      {t.risk > 0 && <span>Risque: {parseFloat(t.risk).toFixed(0)}€</span>}
+                      {t.rr != null && <span className={t.rr >= 0 ? 'text-profit' : 'text-loss'}>{parseFloat(t.rr).toFixed(2)}R</span>}
+                    </div>
+                    {t.notes && <div className="text-[0.65rem] text-txt-2 mt-1">{t.notes}</div>}
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <div className={`font-bold font-mono text-base ${parseFloat(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>
+                    {parseFloat(t.pnl) >= 0 ? '+' : ''}{parseFloat(t.pnl).toFixed(2)}€
+                  </div>
+                  {t.pnl_percent && <div className={`text-[0.6rem] font-mono ${parseFloat(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>{parseFloat(t.pnl_percent).toFixed(2)}%</div>}
+                  {t.trading_view_link && <a href={t.trading_view_link} target="_blank" rel="noopener" className="text-accent text-[0.6rem] font-bold hover:underline">Chart ↗</a>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -141,7 +218,6 @@ export default function DashboardPage() {
 
   return (
     <div className="animate-fade-up">
-      {/* Account selector */}
       <div className="flex items-center gap-3 mb-5">
         <select value={currentAccountId || ''} onChange={e => setCurrentAccountId(e.target.value)}
           className="bg-bg-card border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent">
@@ -150,13 +226,12 @@ export default function DashboardPage() {
         <span className="text-txt-3 text-xs font-mono">{currentAccount.prop_firm}</span>
       </div>
 
-      {/* Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
         {[
           { label: 'Capital Actuel', value: fmt(capital), sub: `${capitalChange >= 0 ? '▲' : '▼'} ${capitalChange >= 0 ? '+' : ''}${capitalChange}%`, color: capitalChange >= 0 ? 'text-profit' : 'text-loss' },
           { label: 'P&L Total', value: fmt(totalPnl), sub: `${at.length} trades`, color: totalPnl >= 0 ? 'text-profit' : 'text-loss' },
           { label: 'Win Rate', value: `${winRate}%`, sub: `${wins}W / ${losses}L`, color: winRate >= 50 ? 'text-profit' : 'text-loss' },
-          { label: 'P&L Mensuel', value: fmt(monthlyPnl), sub: `${monthlyTrades.length} trades ce mois`, color: monthlyPnl >= 0 ? 'text-profit' : 'text-loss' },
+          { label: 'P&L Mensuel', value: fmt(monthlyPnl), sub: `${monthlyTrades.length} trades`, color: monthlyPnl >= 0 ? 'text-profit' : 'text-loss' },
           { label: 'R:R Moyen', value: avgRR ? `${avgRR}R` : '—', sub: rrTrades.length > 0 ? `${rrTrades.length} trades` : 'Aucun risque', color: avgRR && avgRR >= 0 ? 'text-profit' : avgRR ? 'text-loss' : 'text-txt-3' },
         ].map((m) => (
           <div key={m.label} className="relative bg-bg-card border border-brd rounded-xl p-4 transition-all hover:border-brd-hover overflow-hidden metric-glow">
@@ -167,46 +242,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Calendar + Last trades */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <PnLCalendar trades={at} month={calMonth} year={calYear} onPrev={prevMonth} onNext={nextMonth} />
-
-        {/* Last trades */}
-        <div className="bg-bg-card border border-brd rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-brd flex justify-between items-center">
-            <span className="font-display font-bold text-[0.85rem]">Derniers Trades</span>
-            <a href="/trades" className="text-accent text-xs font-semibold hover:underline">Voir tout →</a>
-          </div>
-          <div className="divide-y divide-brd">
-            {at.slice(0, 7).map(t => (
-              <div key={t.id} className="px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-1 h-8 rounded-full flex-shrink-0 ${t.pnl >= 0 ? 'bg-profit' : 'bg-loss'}`} />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm">{t.instrument || '-'}</span>
-                      <span className={`text-[0.55rem] font-bold font-mono px-1.5 py-0.5 rounded ${t.type === 'LONG' ? 'bg-profit/10 text-profit' : 'bg-loss/10 text-loss'}`}>{t.type}</span>
-                    </div>
-                    <span className="text-[0.7rem] text-txt-3 font-mono">{new Date(t.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
-                  </div>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <div className={`font-bold font-mono text-sm ${t.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
-                    {t.pnl >= 0 ? '+' : ''}{parseFloat(t.pnl).toFixed(2)}€
-                  </div>
-                  {t.rr != null && <div className={`text-[0.6rem] font-mono ${t.rr >= 0 ? 'text-profit' : 'text-loss'}`}>{parseFloat(t.rr).toFixed(2)}R</div>}
-                </div>
-              </div>
-            ))}
-            {at.length === 0 && (
-              <div className="text-center py-10 text-txt-3">
-                <div className="text-2xl mb-2 opacity-40">◈</div>
-                <span className="text-sm">Aucun trade</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <PnLCalendar trades={at} month={calMonth} year={calYear} onPrev={prevMonth} onNext={nextMonth} />
     </div>
   );
 }
