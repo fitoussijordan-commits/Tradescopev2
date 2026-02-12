@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
+import EquityCurve from '@/components/EquityCurve';
 
 export default function GlobalStatsPage() {
   const [trades, setTrades] = useState([]);
@@ -76,6 +77,25 @@ export default function GlobalStatsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Global Equity Curve */}
+        <div className="bg-bg-card border border-brd rounded-xl p-5 lg:col-span-2">
+          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-3">Courbe de Progression Globale</h3>
+          <EquityCurve trades={at} baseCapital={accounts.reduce((s, a) => s + parseFloat(a.base_capital), 0)} height={220} />
+        </div>
+
+        {/* Per-account equity curves */}
+        {accounts.length > 1 && accounts.map(a => {
+          const accTrades = at.filter(t => t.account_id === a.id);
+          if (accTrades.length < 2) return null;
+          return (
+            <div key={a.id} className="bg-bg-card border border-brd rounded-xl p-5">
+              <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1">{a.name}</h3>
+              <div className="text-[0.55rem] text-txt-3 font-mono mb-3">{a.prop_firm}</div>
+              <EquityCurve trades={accTrades} baseCapital={parseFloat(a.base_capital)} height={160} />
+            </div>
+          );
+        })}
+
         {/* Day performance */}
         <div className="bg-bg-card border border-brd rounded-xl p-5">
           <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">Performance par Jour (Global)</h3>

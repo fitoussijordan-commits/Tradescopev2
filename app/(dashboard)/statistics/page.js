@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
+import EquityCurve from '@/components/EquityCurve';
 
 export default function StatisticsPage() {
   const [trades, setTrades] = useState([]);
@@ -72,6 +73,12 @@ export default function StatisticsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {/* Equity Curve */}
+        <div className="bg-bg-card border border-brd rounded-xl p-5 md:col-span-2 xl:col-span-3">
+          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-3">Courbe de Progression</h3>
+          <EquityCurve trades={at} baseCapital={account ? parseFloat(account.base_capital) : 0} height={220} />
+        </div>
+
         {/* Day Performance */}
         <div className="bg-bg-card border border-brd rounded-xl p-5">
           <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">Performance par Jour</h3>
