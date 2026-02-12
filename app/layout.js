@@ -21,6 +21,12 @@ export default function RootLayout({ children }) {
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="bg-bg-primary text-txt-1 font-body antialiased">
+        <script dangerouslySetInnerHTML={{ __html: `
+          document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+          document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+          document.addEventListener('gestureend', function(e) { e.preventDefault(); });
+          document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) { e.preventDefault(); } }, { passive: false });
+        `}} />
         {children}
       </body>
     </html>
