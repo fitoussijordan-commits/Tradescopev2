@@ -66,14 +66,21 @@ function PnLCalendar({ trades, month, year, onPrev, onNext }) {
             const count = dayTrades[day]?.length || 0;
             const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
             const isSelected = day === selectedDay;
+
+            const bgStyle = hasData && pnl > 0
+              ? { backgroundColor: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.3)' }
+              : hasData && pnl < 0
+              ? { backgroundColor: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)' }
+              : hasData
+              ? { backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--brd)' }
+              : {};
+
             return (
               <button key={day} onClick={() => hasData ? setSelectedDay(isSelected ? null : day) : null}
+                style={bgStyle}
                 className={`relative rounded-xl p-1.5 min-h-[56px] md:min-h-[70px] flex flex-col items-center justify-center text-center transition-all
                 ${hasData ? 'cursor-pointer hover:scale-[1.03] active:scale-95' : 'cursor-default'}
-                ${hasData && pnl > 0 ? 'bg-profit/10 border border-profit/20' : ''}
-                ${hasData && pnl < 0 ? 'bg-loss/10 border border-loss/20' : ''}
-                ${hasData && pnl === 0 ? 'bg-bg-secondary border border-brd' : ''}
-                ${!hasData ? 'bg-bg-secondary/30 border border-transparent' : ''}
+                ${!hasData ? 'bg-bg-secondary/30' : ''}
                 ${isToday ? 'ring-2 ring-accent ring-offset-1 ring-offset-bg-primary' : ''}
                 ${isSelected ? 'ring-2 ring-accent scale-[1.03] shadow-lg' : ''}
               `}>
