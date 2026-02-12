@@ -140,8 +140,8 @@ export default function TradesPage() {
                 {t.pnl_percent && <div className={'text-[0.7rem] font-mono ' + (t.pnl >= 0 ? 'text-profit' : 'text-loss')}>{parseFloat(t.pnl_percent).toFixed(2)}%</div>}
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex gap-4 text-xs">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex gap-3 text-xs flex-wrap">
                 {t.risk && <span><span className="text-txt-3">Risque</span> <span className="text-amber-400 font-mono font-bold">{parseFloat(t.risk).toFixed(0)}€</span></span>}
                 {t.rr != null && <span><span className="text-txt-3">R:R</span> <span className={'font-mono font-bold ' + (t.rr >= 0 ? 'text-profit' : 'text-loss')}>{parseFloat(t.rr).toFixed(2)}R</span></span>}
                 {t.size && <span><span className="text-txt-3">Taille</span> <span className="font-mono">{t.size}</span></span>}

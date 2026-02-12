@@ -196,15 +196,15 @@ export default function AccountPage() {
                   </div>
                 </div>
               ) : (
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-bold">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div className="min-w-0">
+                    <div className="font-bold truncate">
                       {a.name}
                       {a.is_burned && <span className="ml-2 text-[0.6rem] bg-loss text-white px-1.5 py-0.5 rounded font-bold">GRILLE</span>}
                     </div>
-                    <div className="text-txt-2 text-sm">{a.prop_firm} · {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(a.base_capital)}</div>
+                    <div className="text-txt-2 text-sm truncate">{a.prop_firm} · {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(a.base_capital)}</div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-shrink-0">
                     <button onClick={() => startEdit(a)} className="px-3 py-1.5 border border-brd text-txt-2 rounded-lg text-xs font-semibold hover:border-accent hover:text-accent transition-all">
                       Editer
                     </button>

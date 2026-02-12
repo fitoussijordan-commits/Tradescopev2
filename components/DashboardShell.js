@@ -128,13 +128,13 @@ export default function DashboardShell({ user, profile, accounts, children }) {
       </aside>
 
       {/* Main */}
-      <main className="md:ml-60 flex-1 flex flex-col h-screen overflow-hidden">
-        <div className="bg-bg-secondary border-b border-brd px-4 md:px-7 py-3 flex justify-between items-center min-h-[58px]">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-9 h-9 bg-bg-card border border-brd rounded-lg flex items-center justify-center text-txt-1">
+      <main className="md:ml-60 flex-1 flex flex-col h-screen overflow-hidden w-full min-w-0">
+        <div className="bg-bg-secondary border-b border-brd px-3 md:px-7 py-3 flex justify-between items-center min-h-[58px] gap-2">
+          <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-shrink">
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-9 h-9 bg-bg-card border border-brd rounded-lg flex items-center justify-center text-txt-1 flex-shrink-0">
               ☰
             </button>
-            <h1 className="text-lg font-bold font-display tracking-tight">
+            <h1 className="text-base md:text-lg font-bold font-display tracking-tight truncate">
               {menuItems.flatMap(s => s.items).find(i => i.path === pathname)?.name || 'Dashboard'}
             </h1>
             {currentAccount && (
@@ -146,23 +146,23 @@ export default function DashboardShell({ user, profile, accounts, children }) {
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <ThemeToggle />
 
             {/* Avatar + Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-bg-card border border-transparent hover:border-brd transition-all">
-                <div className="w-9 h-9 bg-gradient-to-br from-accent to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-accent-glow">
+                className="flex items-center gap-2 px-1.5 py-1.5 rounded-xl hover:bg-bg-card border border-transparent hover:border-brd transition-all">
+                <div className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-br from-accent to-purple-500 rounded-full flex items-center justify-center text-white text-xs md:text-sm font-bold shadow-lg shadow-accent-glow flex-shrink-0">
                   {initials}
                 </div>
-                <div className="hidden sm:block text-right">
-                  <div className="text-[0.82rem] font-semibold leading-tight">{profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0]}</div>
+                <div className="hidden md:block text-right">
+                  <div className="text-[0.82rem] font-semibold leading-tight truncate max-w-[140px]">{profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0]}</div>
                   <div className="text-[0.62rem] text-txt-3 font-mono uppercase tracking-wider">
                     {profile?.subscription_status === 'trialing' ? 'Essai gratuit' : profile?.plan?.toUpperCase() || 'GRATUIT'}
                   </div>
                 </div>
-                <svg className={`w-3 h-3 text-txt-3 transition-transform hidden sm:block ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                <svg className={`w-3 h-3 text-txt-3 transition-transform hidden md:block ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </button>
 
               {dropdownOpen && (
@@ -187,7 +187,7 @@ export default function DashboardShell({ user, profile, accounts, children }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-6">
           {children}
         </div>
       </main>
