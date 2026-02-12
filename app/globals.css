@@ -81,11 +81,17 @@ input, select, textarea, button {
 /* Prevent any pinch zoom */
 html {
   touch-action: manipulation;
+  -ms-touch-action: manipulation;
 }
 
 * {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+/* Block pinch zoom on all elements */
+html, body, main, aside, div, section, nav {
+  touch-action: pan-x pan-y;
 }
 
 @keyframes fadeUp {

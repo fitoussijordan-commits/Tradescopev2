@@ -22,10 +22,13 @@ export default function RootLayout({ children }) {
       </head>
       <body className="bg-bg-primary text-txt-1 font-body antialiased">
         <script dangerouslySetInnerHTML={{ __html: `
-          document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
-          document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
-          document.addEventListener('gestureend', function(e) { e.preventDefault(); });
-          document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) { e.preventDefault(); } }, { passive: false });
+          var lastTouchEnd = 0;
+          document.documentElement.addEventListener('gesturestart', function(e) { e.preventDefault(); e.stopPropagation(); return false; }, { passive: false, capture: true });
+          document.documentElement.addEventListener('gesturechange', function(e) { e.preventDefault(); e.stopPropagation(); return false; }, { passive: false, capture: true });
+          document.documentElement.addEventListener('gestureend', function(e) { e.preventDefault(); e.stopPropagation(); return false; }, { passive: false, capture: true });
+          document.documentElement.addEventListener('touchstart', function(e) { if (e.touches.length > 1) { e.preventDefault(); } }, { passive: false, capture: true });
+          document.documentElement.addEventListener('touchmove', function(e) { if (e.touches.length > 1) { e.preventDefault(); } }, { passive: false, capture: true });
+          document.documentElement.addEventListener('touchend', function(e) { var now = Date.now(); if (now - lastTouchEnd <= 300) { e.preventDefault(); } lastTouchEnd = now; }, { passive: false, capture: true });
         `}} />
         {children}
       </body>
