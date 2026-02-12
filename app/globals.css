@@ -67,14 +67,25 @@ html, body {
 }
 
 /* Prevent iOS auto-zoom on inputs */
-input, select, textarea {
+input, select, textarea, button {
   font-size: 16px !important;
+  touch-action: manipulation;
 }
 
 @media (min-width: 768px) {
-  input, select, textarea {
+  input, select, textarea, button {
     font-size: inherit !important;
   }
+}
+
+/* Prevent any pinch zoom */
+html {
+  touch-action: manipulation;
+}
+
+* {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 @keyframes fadeUp {
