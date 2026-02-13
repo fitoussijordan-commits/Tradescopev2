@@ -2,30 +2,27 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import EquityCurve from '@/components/EquityCurve';
+import { useAccount } from '@/components/AccountContext';
 
 export default function StatisticsPage() {
+  const { currentAccount, currentAccountId } = useAccount();
   const [trades, setTrades] = useState([]);
-  const [accounts, setAccounts] = useState([]);
-  const [currentAccountId, setCurrentAccountId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [currentAccountId]);
 
   const loadData = async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data: a } = await supabase.from('trading_accounts').select('*').eq('user_id', user.id).eq('is_burned', false).order('created_at');
     const { data: t } = await supabase.from('trades').select('*').eq('user_id', user.id).eq('is_payout', false);
-    setAccounts(a || []);
     setTrades(t || []);
-    if (a?.length && !currentAccountId) setCurrentAccountId(a[0].id);
     setLoading(false);
   };
 
   const at = trades.filter(t => t.account_id === currentAccountId);
-  const account = accounts.find(a => a.id === currentAccountId);
-  const fmt = (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(v);
+  const account = currentAccount;
+  const fmt = (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(v);
 
   // Day performance
   const dayNames = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
@@ -65,10 +62,6 @@ export default function StatisticsPage() {
   return (
     <div className="animate-fade-up">
       <div className="flex items-center gap-3 mb-5">
-        <select value={currentAccountId || ''} onChange={e => setCurrentAccountId(e.target.value)}
-          className="bg-bg-card border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent">
-          {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-        </select>
         <span className="text-txt-3 text-sm">{at.length} trades</span>
       </div>
 

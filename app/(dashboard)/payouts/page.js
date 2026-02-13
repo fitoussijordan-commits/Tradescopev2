@@ -1,27 +1,24 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
+import { useAccount } from '@/components/AccountContext';
 
 export default function PayoutsPage() {
+  const { accounts, currentAccount, currentAccountId } = useAccount();
   const [trades, setTrades] = useState([]);
-  const [accounts, setAccounts] = useState([]);
-  const [currentAccountId, setCurrentAccountId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], pnl: '', notes: '' });
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [currentAccountId]);
 
   const loadData = async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data: a } = await supabase.from('trading_accounts').select('*').eq('user_id', user.id).order('created_at');
     const { data: t } = await supabase.from('trades').select('*').eq('user_id', user.id).order('date', { ascending: false });
-    setAccounts(a || []);
     setTrades(t || []);
-    if (a?.length && !currentAccountId) setCurrentAccountId(a[0].id);
     setLoading(false);
   };
 
@@ -51,9 +48,6 @@ export default function PayoutsPage() {
     <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-5">
         <div className="flex items-center gap-3 flex-wrap">
-          <select value={currentAccountId || ''} onChange={e => setCurrentAccountId(e.target.value)} className="bg-bg-card border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent">
-            {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select>
           <div className="bg-bg-card border border-brd rounded-xl px-4 py-2">
             <span className="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider">Total retiré</span>
             <div className="text-lg font-bold font-display text-amber-400">{fmt(totalPayouts)}</div>

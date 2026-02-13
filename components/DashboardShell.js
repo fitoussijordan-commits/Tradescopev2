@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
+import { AccountProvider, useAccount } from './AccountContext';
 
 const menuItems = [
   { label: 'Analytics', items: [
@@ -30,20 +31,17 @@ function getInitials(email, name) {
 
 function ThemeToggle() {
   const [theme, setTheme] = useState('dark');
-
   useEffect(() => {
     const saved = localStorage.getItem('ts-theme') || 'dark';
     setTheme(saved);
     document.documentElement.setAttribute('data-theme', saved);
   }, []);
-
   const toggle = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     localStorage.setItem('ts-theme', next);
     document.documentElement.setAttribute('data-theme', next);
   };
-
   return (
     <button onClick={toggle} className="w-9 h-9 bg-bg-card border border-brd rounded-lg flex items-center justify-center text-txt-2 hover:text-txt-1 hover:border-brd-hover transition-all" title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}>
       {theme === 'dark' ? '☀' : '☾'}
@@ -51,12 +49,34 @@ function ThemeToggle() {
   );
 }
 
-export default function DashboardShell({ user, profile, accounts, children }) {
+function AccountSelector() {
+  const { accounts, currentAccountId, selectAccount } = useAccount();
+  if (!accounts || accounts.length <= 1) return null;
+  return (
+    <select value={currentAccountId || ''} onChange={e => selectAccount(e.target.value)}
+      className="hidden md:block bg-accent-dim border border-accent/15 rounded-full px-3 py-1.5 text-[0.82rem] font-bold focus:outline-none focus:border-accent cursor-pointer">
+      {accounts.map(a => <option key={a.id} value={a.id}>{a.name} — {a.prop_firm}</option>)}
+    </select>
+  );
+}
+
+function MobileAccountSelector() {
+  const { accounts, currentAccountId, selectAccount } = useAccount();
+  if (!accounts || accounts.length <= 1) return null;
+  return (
+    <select value={currentAccountId || ''} onChange={e => selectAccount(e.target.value)}
+      className="md:hidden bg-accent-dim border border-accent/15 rounded-lg px-2 py-1.5 text-[0.75rem] font-bold focus:outline-none focus:border-accent max-w-[140px] truncate">
+      {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+    </select>
+  );
+}
+
+function ShellInner({ user, profile, children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const pathname = usePathname();
-  const router = useRouter();
+  const { currentAccount } = useAccount();
 
   const initials = getInitials(user.email, profile?.full_name || user.user_metadata?.full_name);
 
@@ -74,15 +94,12 @@ export default function DashboardShell({ user, profile, accounts, children }) {
     window.location.href = '/';
   };
 
-  const currentAccount = accounts[0];
-
   return (
     <div className="flex h-screen">
       {mobileOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99] md:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <aside className={`w-60 bg-sidebar border-r border-brd flex flex-col fixed left-0 top-0 h-screen z-[100] transition-transform duration-300
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         
@@ -99,14 +116,10 @@ export default function DashboardShell({ user, profile, accounts, children }) {
                 const locked = item.requiredPlan && !item.requiredPlan.includes(profile?.plan);
                 const active = pathname === item.path;
                 return (
-                  <Link
-                    key={item.path}
-                    href={locked ? '/account' : item.path}
-                    onClick={() => setMobileOpen(false)}
+                  <Link key={item.path} href={locked ? '/account' : item.path} onClick={() => setMobileOpen(false)}
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[0.88rem] font-medium relative transition-all
                       ${active ? 'bg-accent-dim text-accent font-semibold' : 'text-txt-2 hover:bg-accent-dim hover:text-txt-1'}
-                      ${locked ? 'opacity-40' : ''}`}
-                  >
+                      ${locked ? 'opacity-40' : ''}`}>
                     {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-accent rounded-r" />}
                     <span className="text-[1.05rem] w-[22px] text-center">{item.icon}</span>
                     <span>{item.name}</span>
@@ -128,7 +141,6 @@ export default function DashboardShell({ user, profile, accounts, children }) {
         </div>
       </aside>
 
-      {/* Main */}
       <main className="md:ml-60 flex-1 flex flex-col h-screen overflow-hidden w-full min-w-0">
         <div className="bg-bg-secondary border-b border-brd px-3 md:px-7 py-3 flex justify-between items-center min-h-[58px] gap-2">
           <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-shrink">
@@ -138,19 +150,12 @@ export default function DashboardShell({ user, profile, accounts, children }) {
             <h1 className="text-base md:text-lg font-bold font-display tracking-tight truncate">
               {menuItems.flatMap(s => s.items).find(i => i.path === pathname)?.name || 'Dashboard'}
             </h1>
-            {currentAccount && (
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-accent-dim border border-accent/15 rounded-full text-[0.82rem]">
-                <div className="w-1.5 h-1.5 bg-profit rounded-full" />
-                <span className="font-bold">{currentAccount.name}</span>
-                <span className="text-txt-2 text-[0.75rem]">{currentAccount.prop_firm}</span>
-              </div>
-            )}
+            <AccountSelector />
+            <MobileAccountSelector />
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
             <ThemeToggle />
-
-            {/* Avatar + Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="flex items-center gap-2 px-1.5 py-1.5 rounded-xl hover:bg-bg-card border border-transparent hover:border-brd transition-all">
@@ -193,5 +198,15 @@ export default function DashboardShell({ user, profile, accounts, children }) {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function DashboardShell({ user, profile, accounts, children }) {
+  return (
+    <AccountProvider accounts={accounts}>
+      <ShellInner user={user} profile={profile}>
+        {children}
+      </ShellInner>
+    </AccountProvider>
   );
 }

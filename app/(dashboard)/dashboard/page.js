@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
+import { useAccount } from '@/components/AccountContext';
 
 function PnLCalendar({ trades, month, year, onPrev, onNext }) {
   const [selectedDay, setSelectedDay] = useState(null);
@@ -169,24 +170,22 @@ function PnLCalendar({ trades, month, year, onPrev, onNext }) {
 }
 
 export default function DashboardPage() {
-  const [accounts, setAccounts] = useState([]);
+  const { currentAccount, currentAccountId } = useAccount();
   const [trades, setTrades] = useState([]);
-  const [currentAccountId, setCurrentAccountId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [calMonth, setCalMonth] = useState(new Date().getMonth());
   const [calYear, setCalYear] = useState(new Date().getFullYear());
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [currentAccountId]);
 
   const loadData = async () => {
+    if (!currentAccountId) return;
+    setLoading(true);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data: a } = await supabase.from('trading_accounts').select('*').eq('user_id', user.id).eq('is_burned', false).order('created_at');
     const { data: t } = await supabase.from('trades').select('*').eq('user_id', user.id).eq('is_payout', false).order('date', { ascending: false });
-    setAccounts(a || []);
     setTrades(t || []);
-    if (a?.length && !currentAccountId) setCurrentAccountId(a[0].id);
     setLoading(false);
   };
 
@@ -201,7 +200,6 @@ export default function DashboardPage() {
 
   if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
 
-  const currentAccount = accounts.find(a => a.id === currentAccountId);
   if (!currentAccount) {
     return (
       <div className="text-center py-20">
@@ -229,18 +227,10 @@ export default function DashboardPage() {
   const rrTrades = at.filter(t => t.rr != null);
   const avgRR = rrTrades.length > 0 ? (rrTrades.reduce((s, t) => s + parseFloat(t.rr), 0) / rrTrades.length).toFixed(2) : null;
 
-  const fmt = (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
+  const fmt = (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
 
   return (
     <div className="animate-fade-up">
-      <div className="flex items-center gap-3 mb-5">
-        <select value={currentAccountId || ''} onChange={e => setCurrentAccountId(e.target.value)}
-          className="bg-bg-card border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent">
-          {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-        </select>
-        <span className="text-txt-3 text-xs font-mono">{currentAccount.prop_firm}</span>
-      </div>
-
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
         {[
           { label: 'Capital Actuel', value: fmt(capital), sub: `${capitalChange >= 0 ? '▲' : '▼'} ${capitalChange >= 0 ? '+' : ''}${capitalChange}%`, color: capitalChange >= 0 ? 'text-profit' : 'text-loss' },
