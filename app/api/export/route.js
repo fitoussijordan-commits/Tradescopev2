@@ -7,7 +7,7 @@ export async function POST(request) {
   if (!user) return NextResponse.json({ error: 'Non authentifie' }, { status: 401 });
 
   const body = await request.json();
-  const { accountId, maxLoss, objWeekPct, objDayPct } = body;
+  const { accountId, maxLoss, objWeekPct, objDayPct, months } = body;
 
   const { data: account } = await supabase
     .from('trading_accounts')
@@ -30,6 +30,6 @@ export async function POST(request) {
   return NextResponse.json({
     account,
     trades: trades || [],
-    params: { maxLoss, objWeekPct, objDayPct },
+    params: { maxLoss, objWeekPct, objDayPct, months: months || [] },
   });
 }

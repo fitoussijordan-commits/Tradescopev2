@@ -10,8 +10,11 @@ export default function ExportPage() {
   const [maxLoss, setMaxLoss] = useState('1.0');
   const [objWeek, setObjWeek] = useState('4.0');
   const [objDay, setObjDay] = useState('2.0');
+  const [availableMonths, setAvailableMonths] = useState([]);
+  const [selectedMonths, setSelectedMonths] = useState([]);
 
   useEffect(() => { loadAccounts(); }, []);
+  useEffect(() => { if (selectedAccount) loadMonths(); }, [selectedAccount]);
 
   const loadAccounts = async () => {
     const supabase = createClient();
@@ -22,6 +25,28 @@ export default function ExportPage() {
     if (data?.length) setSelectedAccount(data[0].id);
     setLoading(false);
   };
+
+  const monthNames = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+
+  const loadMonths = async () => {
+    const supabase = createClient();
+    const { data: trades } = await supabase.from('trades').select('date').eq('account_id', selectedAccount).eq('is_payout', false);
+    const months = new Set();
+    (trades || []).forEach(t => {
+      const d = new Date(t.date);
+      months.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    });
+    const sorted = [...months].sort();
+    setAvailableMonths(sorted);
+    setSelectedMonths(sorted); // select all by default
+  };
+
+  const toggleMonth = (m) => {
+    setSelectedMonths(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]);
+  };
+
+  const selectAll = () => setSelectedMonths([...availableMonths]);
+  const selectNone = () => setSelectedMonths([]);
 
   const generateExcel = async () => {
     setExporting(true);
@@ -34,6 +59,7 @@ export default function ExportPage() {
           maxLoss: parseFloat(maxLoss),
           objWeekPct: parseFloat(objWeek),
           objDayPct: parseFloat(objDay),
+          months: selectedMonths,
         }),
       });
       const data = await res.json();
@@ -64,11 +90,11 @@ export default function ExportPage() {
     });
 
     const monthNames = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
-    const monthKeys = Object.keys(tradesByMonth).sort();
+    const monthKeys = Object.keys(tradesByMonth).sort().filter(k => params.months.includes(k));
     if (monthKeys.length === 0) {
-      const now = new Date();
-      monthKeys.push(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
-      tradesByMonth[monthKeys[0]] = [];
+      alert('Aucun mois selectionne avec des trades');
+      setExporting(false);
+      return;
     }
 
     const darkBlue = 'FF1B2A4A';
@@ -333,7 +359,32 @@ export default function ExportPage() {
             </div>
           </div>
 
-          <button onClick={generateExcel} disabled={exporting || !selectedAccount}
+          {/* Month selection */}
+          {availableMonths.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider">Mois a exporter</label>
+                <div className="flex gap-2">
+                  <button onClick={selectAll} className="text-[0.6rem] text-accent font-bold hover:underline">Tout</button>
+                  <button onClick={selectNone} className="text-[0.6rem] text-txt-3 font-bold hover:underline">Aucun</button>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {availableMonths.map(m => {
+                  const [y, mo] = m.split('-').map(Number);
+                  const active = selectedMonths.includes(m);
+                  return (
+                    <button key={m} onClick={() => toggleMonth(m)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95 ${active ? 'bg-accent text-white' : 'bg-bg-secondary border border-brd text-txt-2 hover:border-accent'}`}>
+                      {monthNames[mo - 1]} {y}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <button onClick={generateExcel} disabled={exporting || !selectedAccount || selectedMonths.length === 0}
             className="w-full py-3 bg-accent text-white font-bold rounded-lg hover:opacity-90 transition-all shadow-lg shadow-accent-glow disabled:opacity-50">
             {exporting ? 'Generation en cours...' : 'Telecharger Excel'}
           </button>
