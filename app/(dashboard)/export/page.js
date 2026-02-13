@@ -39,7 +39,7 @@ export default function ExportPage() {
       const data = await res.json();
       if (!res.ok) { alert(data.error); setExporting(false); return; }
 
-      // Dynamic import ExcelJS from CDN
+      if (window.ExcelJS) { buildExcel(data); return; }
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
       script.onload = () => buildExcel(data);
@@ -55,7 +55,6 @@ export default function ExportPage() {
     const ExcelJS = window.ExcelJS;
     const wb = new ExcelJS.Workbook();
 
-    // Group trades by month
     const tradesByMonth = {};
     trades.forEach(t => {
       const d = new Date(t.date);
@@ -66,213 +65,193 @@ export default function ExportPage() {
 
     const monthNames = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
     const monthKeys = Object.keys(tradesByMonth).sort();
-
     if (monthKeys.length === 0) {
       const now = new Date();
       monthKeys.push(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
       tradesByMonth[monthKeys[0]] = [];
     }
 
-    monthKeys.forEach((mk, mIdx) => {
+    const darkBlue = 'FF1B2A4A';
+    const headerBg = 'FF2C3E6B';
+    const greenFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
+    const redFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } };
+    const greenFont = { color: { argb: 'FF006100' } };
+    const redFont = { color: { argb: 'FF9C0006' } };
+    const white = 'FFFFFFFF';
+
+    monthKeys.forEach((mk) => {
       const [yr, mo] = mk.split('-').map(Number);
       const monthTrades = tradesByMonth[mk];
-      const sheetName = `${monthNames[mo - 1]} ${yr}`;
-      const ws = wb.addWorksheet(sheetName);
+      const ws = wb.addWorksheet(`${monthNames[mo - 1]} ${yr}`);
 
-      // Colors
-      const darkBlue = 'FF1B2A4A';
-      const headerBg = 'FF2C3E6B';
-      const greenBg = 'FF00B050';
-      const redBg = 'FFFF0000';
-      const lightGreen = 'FFE2EFDA';
-      const lightRed = 'FFFCE4EC';
-      const white = 'FFFFFFFF';
-      const gray = 'FFF5F5F5';
+      // Column widths - BIGGER
+      ws.getColumn(1).width = 8;
+      ws.getColumn(2).width = 18;
+      ws.getColumn(3).width = 16;
+      ws.getColumn(4).width = 20;
+      ws.getColumn(5).width = 12;
+      ws.getColumn(6).width = 20;
+      ws.getColumn(7).width = 20;
+      ws.getColumn(8).width = 4; // spacer
 
-      // Column widths
-      ws.getColumn(1).width = 6;   // A: week
-      ws.getColumn(2).width = 14;  // B: Capital
-      ws.getColumn(3).width = 14;  // C: Obj Gain/J
-      ws.getColumn(4).width = 16;  // D: Profits/Pertes/J
-      ws.getColumn(5).width = 10;  // E: %/J
-      ws.getColumn(6).width = 16;  // F: Avance et retard
-      ws.getColumn(7).width = 16;  // G: Profit mensuel
-
-      // Header area
+      // Row 1 - Title
       ws.mergeCells('A1:G1');
-      const titleCell = ws.getCell('A1');
-      titleCell.value = `MOIS - ${monthNames[mo - 1].toUpperCase()} ${yr}`;
-      titleCell.font = { bold: true, size: 14, color: { argb: white } };
-      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: darkBlue } };
-      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-      ws.getRow(1).height = 30;
+      const t1 = ws.getCell('A1');
+      t1.value = `MOIS - ${monthNames[mo - 1].toUpperCase()} ${yr}`;
+      t1.font = { bold: true, size: 16, color: { argb: white } };
+      t1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: darkBlue } };
+      t1.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws.getRow(1).height = 36;
 
-      // Account info row 2
+      // Calculate starting capital for this month
+      let startCapital = parseFloat(account.base_capital);
+      for (const t of trades) {
+        if (new Date(t.date) < new Date(yr, mo - 1, 1)) {
+          startCapital += parseFloat(t.pnl);
+        }
+      }
+
+      // Row 2 - Capital de base + Perte max
       ws.getCell('A2').value = 'Capital de base';
-      ws.getCell('A2').font = { bold: true, size: 10 };
+      ws.getCell('A2').font = { bold: true, size: 11 };
       ws.mergeCells('A2:C2');
       ws.getCell('D2').value = parseFloat(account.base_capital);
       ws.getCell('D2').numFmt = '#,##0.00 €';
-      ws.getCell('D2').font = { bold: true };
-
+      ws.getCell('D2').font = { bold: true, size: 11 };
       ws.getCell('F2').value = 'Perte Max autorisee';
-      ws.getCell('F2').font = { bold: true, size: 9 };
+      ws.getCell('F2').font = { bold: true, size: 10 };
       ws.getCell('G2').value = params.maxLoss / 100;
       ws.getCell('G2').numFmt = '0.0%';
-      ws.getCell('G2').font = { bold: true, color: { argb: 'FFFF0000' } };
-      ws.getCell('G2').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: lightRed } };
+      ws.getCell('G2').font = { bold: true, size: 12, color: { argb: 'FFFF0000' } };
+      ws.getCell('G2').fill = redFill;
+      ws.getRow(2).height = 22;
 
-      // Row 3
-      let runningCapital = parseFloat(account.base_capital);
-      for (const t of trades) {
-        if (new Date(t.date) < new Date(yr, mo - 1, 1)) {
-          runningCapital += parseFloat(t.pnl);
-        }
-      }
-      ws.getCell('A3').value = 'Capital en cours';
-      ws.getCell('A3').font = { bold: true, size: 10 };
-      ws.mergeCells('A3:C3');
-
+      // Row 3 - Capital en cours + Obj/S
       const monthPnl = monthTrades.reduce((s, t) => s + parseFloat(t.pnl), 0);
-      ws.getCell('D3').value = runningCapital + monthPnl;
+      ws.getCell('A3').value = 'Capital en cours';
+      ws.getCell('A3').font = { bold: true, size: 11 };
+      ws.mergeCells('A3:C3');
+      ws.getCell('D3').value = startCapital + monthPnl;
       ws.getCell('D3').numFmt = '#,##0.00 €';
-      ws.getCell('D3').font = { bold: true };
-
+      ws.getCell('D3').font = { bold: true, size: 11 };
       ws.getCell('F3').value = 'Obj/S gain en % =';
-      ws.getCell('F3').font = { bold: true, size: 9 };
+      ws.getCell('F3').font = { bold: true, size: 10 };
       ws.getCell('G3').value = params.objWeekPct / 100;
       ws.getCell('G3').numFmt = '0.0%';
-      ws.getCell('G3').font = { bold: true };
+      ws.getCell('G3').font = { bold: true, size: 11 };
+      ws.getRow(3).height = 22;
 
-      // Row 4
+      // Row 4 - Obj/J
       ws.getCell('F4').value = 'Obj/J en % =';
-      ws.getCell('F4').font = { bold: true, size: 9 };
+      ws.getCell('F4').font = { bold: true, size: 10 };
       ws.getCell('G4').value = params.objDayPct / 100;
       ws.getCell('G4').numFmt = '0.0%';
-      ws.getCell('G4').font = { bold: true };
+      ws.getCell('G4').font = { bold: true, size: 11 };
+      ws.getRow(4).height = 22;
 
-      // Column headers row 5
+      // Row 5 - empty
+      ws.getRow(5).height = 8;
+
+      // Row 6 - Column headers
       const headers = ['Sem.', 'Capital', 'Obj Gain /J', 'Profits/Pertes / J', '% / J', 'Avance et retard', 'Profit mensuel'];
-      const headerRow = ws.getRow(6);
+      const hRow = ws.getRow(6);
       headers.forEach((h, i) => {
-        const cell = headerRow.getCell(i + 1);
-        cell.value = h;
-        cell.font = { bold: true, color: { argb: white }, size: 10 };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.border = {
-          bottom: { style: 'thin', color: { argb: darkBlue } },
-        };
+        const c = hRow.getCell(i + 1);
+        c.value = h;
+        c.font = { bold: true, color: { argb: white }, size: 11 };
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+        c.alignment = { horizontal: 'center', vertical: 'middle' };
       });
-      headerRow.height = 22;
+      hRow.height = 26;
 
-      // Build day-by-day data grouped by weeks
+      // Build weeks (Mon-Fri)
       const daysInMonth = new Date(yr, mo, 0).getDate();
-      const firstDow = new Date(yr, mo - 1, 1).getDay();
-
-      // Group by trading weeks (Mon-Fri)
       const weeks = [];
-      let currentWeek = [];
+      let curWeek = [];
       for (let d = 1; d <= daysInMonth; d++) {
         const dow = new Date(yr, mo - 1, d).getDay();
-        if (dow === 1 && currentWeek.length > 0) {
-          weeks.push(currentWeek);
-          currentWeek = [];
-        }
-        if (dow >= 1 && dow <= 5) {
-          currentWeek.push(d);
-        }
+        if (dow === 1 && curWeek.length > 0) { weeks.push(curWeek); curWeek = []; }
+        if (dow >= 1 && dow <= 5) curWeek.push(d);
       }
-      if (currentWeek.length > 0) weeks.push(currentWeek);
+      if (curWeek.length > 0) weeks.push(curWeek);
 
       let row = 7;
-      let cumCapital = runningCapital;
+      let cumCapital = startCapital;
       let cumPnl = 0;
-      const objPerDay = runningCapital * (params.objDayPct / 100);
+      const objPerDay = startCapital * (params.objDayPct / 100);
+      const dataStartRow = 7;
 
       weeks.forEach((week, wIdx) => {
         let weekPnl = 0;
         const weekStartRow = row;
 
-        week.forEach((day, dIdx) => {
+        week.forEach((day) => {
           const dayTrades = monthTrades.filter(t => new Date(t.date).getDate() === day);
           const dayPnl = dayTrades.reduce((s, t) => s + parseFloat(t.pnl), 0);
           weekPnl += dayPnl;
 
           const r = ws.getRow(row);
+          r.height = 20;
 
-          // Week label (first day only)
-          if (dIdx === 0) {
-            r.getCell(1).value = `s${wIdx + 1}`;
-            r.getCell(1).font = { bold: true, size: 10 };
-            r.getCell(1).alignment = { vertical: 'middle' };
-          }
-
-          // Capital
+          // B: Capital
           r.getCell(2).value = cumCapital;
           r.getCell(2).numFmt = '#,##0.00 €';
+          r.getCell(2).font = { size: 10 };
 
-          // Obj Gain /J
+          // C: Obj Gain /J
           r.getCell(3).value = objPerDay;
           r.getCell(3).numFmt = '#,##0.00€';
-          r.getCell(3).font = { bold: true };
+          r.getCell(3).font = { bold: true, size: 10 };
 
-          // Profits/Pertes / J
+          // D: Profits/Pertes / J
           r.getCell(4).value = dayPnl;
           r.getCell(4).numFmt = '#,##0.00€';
-          if (dayPnl > 0) {
-            r.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
-            r.getCell(4).font = { color: { argb: 'FF006100' } };
-          } else if (dayPnl < 0) {
-            r.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } };
-            r.getCell(4).font = { color: { argb: 'FF9C0006' } };
-          }
+          r.getCell(4).font = { size: 10, ...(dayPnl > 0 ? greenFont : dayPnl < 0 ? redFont : {}) };
+          if (dayPnl > 0) r.getCell(4).fill = greenFill;
+          else if (dayPnl < 0) r.getCell(4).fill = redFill;
 
-          // % / J
+          // E: % / J
           const pct = cumCapital > 0 ? dayPnl / cumCapital : 0;
           r.getCell(5).value = pct;
           r.getCell(5).numFmt = '0.0%';
-          if (dayPnl < 0) {
-            r.getCell(5).font = { color: { argb: 'FF9C0006' } };
-          }
+          r.getCell(5).font = { size: 10, ...(dayPnl < 0 ? redFont : dayPnl > 0 ? greenFont : {}) };
 
           cumCapital += dayPnl;
           cumPnl += dayPnl;
           row++;
         });
 
-        // Week summary - Avance et retard
-        const weekTarget = runningCapital * (params.objWeekPct / 100);
-        const avance = weekPnl > 0 ? ((weekPnl / runningCapital) * 100).toFixed(1) + '%' : weekPnl < 0 ? ((weekPnl / runningCapital) * 100).toFixed(1) + '%' : '0.0%';
-        const midRow = weekStartRow + Math.floor(week.length / 2);
-        const avanceCell = ws.getRow(midRow).getCell(6);
-        avanceCell.value = parseFloat(avance) / 100;
+        // F: Avance et retard - write on FIRST cell of week BEFORE merging
+        const weekPct = startCapital > 0 ? weekPnl / startCapital : 0;
+        const avanceCell = ws.getRow(weekStartRow).getCell(6);
+        avanceCell.value = weekPct;
         avanceCell.numFmt = '0.0%';
         avanceCell.alignment = { horizontal: 'center', vertical: 'middle' };
-        if (weekPnl < 0) {
-          avanceCell.font = { color: { argb: 'FF9C0006' }, bold: true };
-          avanceCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } };
-        } else {
-          avanceCell.font = { color: { argb: 'FF006100' }, bold: true };
-        }
+        avanceCell.font = { bold: true, size: 11, ...(weekPnl < 0 ? redFont : weekPnl > 0 ? greenFont : {}) };
+        if (weekPnl < 0) avanceCell.fill = redFill;
+        else if (weekPnl > 0) avanceCell.fill = greenFill;
 
-        // Merge week label
+        // A: Week label on FIRST cell BEFORE merging
+        ws.getRow(weekStartRow).getCell(1).value = `s${wIdx + 1}`;
+        ws.getRow(weekStartRow).getCell(1).font = { bold: true, size: 11 };
+        ws.getRow(weekStartRow).getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+
+        // Merge week label + avance columns
         if (week.length > 1) {
           ws.mergeCells(weekStartRow, 1, weekStartRow + week.length - 1, 1);
           ws.mergeCells(weekStartRow, 6, weekStartRow + week.length - 1, 6);
         }
       });
 
-      // Monthly profit column - merged on right
-      const dataStartRow = 7;
       const dataEndRow = row - 1;
+
+      // G: Profit mensuel - write on FIRST cell BEFORE merging
       if (dataEndRow >= dataStartRow) {
-        const midDataRow = dataStartRow + Math.floor((dataEndRow - dataStartRow) / 2);
-        const profitCell = ws.getRow(midDataRow).getCell(7);
+        const profitCell = ws.getRow(dataStartRow).getCell(7);
         profitCell.value = cumPnl;
         profitCell.numFmt = '#,##0.00€';
-        profitCell.font = { bold: true, size: 14, color: { argb: cumPnl >= 0 ? 'FF006100' : 'FF9C0006' } };
-        profitCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cumPnl >= 0 ? 'FFC6EFCE' : 'FFFFC7CE' } };
+        profitCell.font = { bold: true, size: 16, ...(cumPnl >= 0 ? greenFont : redFont) };
+        profitCell.fill = cumPnl >= 0 ? greenFill : redFill;
         profitCell.alignment = { horizontal: 'center', vertical: 'middle' };
         if (dataEndRow > dataStartRow) {
           ws.mergeCells(dataStartRow, 7, dataEndRow, 7);
@@ -281,29 +260,33 @@ export default function ExportPage() {
 
       // Total row
       const totalRow = ws.getRow(row);
+      totalRow.height = 24;
       totalRow.getCell(4).value = cumPnl;
       totalRow.getCell(4).numFmt = '#,##0.00 €';
-      totalRow.getCell(4).font = { bold: true, color: { argb: cumPnl >= 0 ? 'FF006100' : 'FF9C0006' } };
-      totalRow.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cumPnl >= 0 ? 'FFC6EFCE' : 'FFFFC7CE' } };
-
-      const totalPct = runningCapital > 0 ? cumPnl / runningCapital : 0;
+      totalRow.getCell(4).font = { bold: true, size: 12, ...(cumPnl >= 0 ? greenFont : redFont) };
+      totalRow.getCell(4).fill = cumPnl >= 0 ? greenFill : redFill;
+      const totalPct = startCapital > 0 ? cumPnl / startCapital : 0;
       totalRow.getCell(5).value = totalPct;
       totalRow.getCell(5).numFmt = '0.0%';
-      totalRow.getCell(5).font = { bold: true, color: { argb: cumPnl >= 0 ? 'FF006100' : 'FF9C0006' } };
-      totalRow.getCell(5).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cumPnl >= 0 ? 'FFC6EFCE' : 'FFFFC7CE' } };
+      totalRow.getCell(5).font = { bold: true, size: 12, ...(cumPnl >= 0 ? greenFont : redFont) };
+      totalRow.getCell(5).fill = cumPnl >= 0 ? greenFill : redFill;
 
-      // Style all data rows with light borders
+      // Borders on all data cells
       for (let r = 7; r <= row; r++) {
         for (let c = 1; c <= 7; c++) {
           const cell = ws.getRow(r).getCell(c);
-          cell.border = { bottom: { style: 'hair', color: { argb: 'FFD0D0D0' } } };
+          cell.border = {
+            top: { style: 'hair', color: { argb: 'FFD0D0D0' } },
+            bottom: { style: 'hair', color: { argb: 'FFD0D0D0' } },
+            left: { style: 'hair', color: { argb: 'FFD0D0D0' } },
+            right: { style: 'hair', color: { argb: 'FFD0D0D0' } },
+          };
           if (!cell.alignment) cell.alignment = {};
           cell.alignment.vertical = 'middle';
         }
       }
     });
 
-    // Generate and download
     const buffer = await wb.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
@@ -321,10 +304,9 @@ export default function ExportPage() {
     <div className="max-w-2xl mx-auto animate-fade-up">
       <div className="bg-bg-card border border-brd rounded-xl p-6">
         <h2 className="font-display font-bold text-xl mb-1">Export Excel</h2>
-        <p className="text-txt-2 text-sm mb-6">Genere un fichier Excel style Family Trader avec tes trades.</p>
+        <p className="text-txt-2 text-sm mb-6">Genere un fichier Excel avec tes trades, par mois.</p>
 
         <div className="space-y-4">
-          {/* Account select */}
           <div>
             <label className="block text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider mb-1.5">Compte</label>
             <select value={selectedAccount || ''} onChange={e => setSelectedAccount(e.target.value)}
@@ -333,7 +315,6 @@ export default function ExportPage() {
             </select>
           </div>
 
-          {/* Params */}
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider mb-1.5">Perte Max (%)</label>
@@ -349,27 +330,6 @@ export default function ExportPage() {
               <label className="block text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider mb-1.5">Obj/Jour (%)</label>
               <input type="number" step="0.1" value={objDay} onChange={e => setObjDay(e.target.value)}
                 className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent" />
-            </div>
-          </div>
-
-          {/* Preview */}
-          <div className="bg-bg-secondary border border-brd rounded-lg p-4 text-sm">
-            <div className="text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-2">Apercu du format</div>
-            <div className="grid grid-cols-7 gap-1 text-[0.55rem] font-mono">
-              <div className="bg-[#2C3E6B] text-white p-1 rounded text-center font-bold">Sem.</div>
-              <div className="bg-[#2C3E6B] text-white p-1 rounded text-center font-bold">Capital</div>
-              <div className="bg-[#2C3E6B] text-white p-1 rounded text-center font-bold">Obj/J</div>
-              <div className="bg-[#2C3E6B] text-white p-1 rounded text-center font-bold">P&L/J</div>
-              <div className="bg-[#2C3E6B] text-white p-1 rounded text-center font-bold">%/J</div>
-              <div className="bg-[#2C3E6B] text-white p-1 rounded text-center font-bold">Avance</div>
-              <div className="bg-[#2C3E6B] text-white p-1 rounded text-center font-bold">Mensuel</div>
-              <div className="p-1 text-txt-3">s1</div>
-              <div className="p-1">50 000€</div>
-              <div className="p-1 font-bold">1 000€</div>
-              <div className="p-1 rounded" style={{backgroundColor: 'rgba(34,197,94,0.15)', color: '#006100'}}>+295€</div>
-              <div className="p-1" style={{color: '#006100'}}>0.6%</div>
-              <div className="p-1 text-txt-3">-0.6%</div>
-              <div className="p-1 rounded font-bold" style={{backgroundColor: 'rgba(239,68,68,0.15)', color: '#9C0006'}}>-273€</div>
             </div>
           </div>
 
