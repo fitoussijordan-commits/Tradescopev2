@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 
 export default function EquityCurve({ trades, baseCapital, height = 180 }) {
   const [hoverIdx, setHoverIdx] = useState(null);
@@ -75,33 +75,7 @@ export default function EquityCurve({ trades, baseCapital, height = 180 }) {
   const changePct = baseCapital ? ((change / baseCapital) * 100).toFixed(2) : '0.00';
   const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
 
-  const handleMouseMove = useCallback((e) => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    const mouseX = ((e.clientX - rect.left) / rect.width) * width;
-    const mouseY = ((e.clientY - rect.top) / rect.height) * height;
-    let closest = null;
-    let minDist = Infinity;
-    points.forEach((p, i) => {
-      if (i === 0) return; // skip start point
-      const px = toX(p.x);
-      const py = toY(p.y);
-      const dist = Math.sqrt((px - mouseX) ** 2 + (py - mouseY) ** 2);
-      if (dist < minDist) { minDist = dist; closest = i; }
-    });
-    // Only show tooltip if within 25px of a point
-    if (minDist < 25) {
-      setHoverIdx(closest);
-    } else {
-      setHoverIdx(null);
-    }
-  }, [points]);
-
-  const handleClick = () => {
-    if (hoverIdx !== null && points[hoverIdx]?.date) {
-      setSelectedDay(points[hoverIdx]);
-    }
-  };
+  const handleClick = () => {};
 
   const hp = hoverIdx !== null ? points[hoverIdx] : null;
 
@@ -119,11 +93,9 @@ export default function EquityCurve({ trades, baseCapital, height = 180 }) {
       </div>
 
       <div className="relative">
-        <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} className="w-full cursor-crosshair"
+        <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} className="w-full"
           style={{ height }}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={() => setHoverIdx(null)}
-          onClick={handleClick}>
+          onMouseLeave={() => setHoverIdx(null)}>
           <defs>
             <linearGradient id="fillGreen" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--profit)" stopOpacity="0.25" />
@@ -156,16 +128,16 @@ export default function EquityCurve({ trades, baseCapital, height = 180 }) {
           {/* Day dots with hit areas */}
           {points.map((p, i) => i > 0 && (
             <g key={i} style={{ cursor: 'pointer' }}
-              onClick={(e) => { e.stopPropagation(); if (p.date) setSelectedDay(p); }}
-              onMouseEnter={() => setHoverIdx(i)}
-              onMouseLeave={() => setHoverIdx(null)}>
-              {/* Invisible larger hit area */}
-              <circle cx={toX(p.x)} cy={toY(p.y)} r="15" fill="transparent" />
+              onPointerEnter={() => setHoverIdx(i)}
+              onPointerLeave={() => setHoverIdx(null)}
+              onPointerDown={(e) => { e.stopPropagation(); if (p.date) setSelectedDay(p); }}>
+              {/* Large invisible hit area */}
+              <circle cx={toX(p.x)} cy={toY(p.y)} r="20" fill="transparent" stroke="none" />
               {/* Visible dot */}
-              <circle cx={toX(p.x)} cy={toY(p.y)} r={hoverIdx === i ? 6 : 4}
+              <circle cx={toX(p.x)} cy={toY(p.y)} r={hoverIdx === i ? 7 : 4.5}
                 fill={p.dayPnl >= 0 ? 'var(--profit)' : 'var(--loss)'}
                 stroke="var(--bg-card)" strokeWidth="2"
-                style={{ transition: 'r 0.15s ease' }} />
+                style={{ transition: 'r 0.15s ease', pointerEvents: 'none' }} />
             </g>
           ))}
 
