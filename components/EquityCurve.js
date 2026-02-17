@@ -79,13 +79,22 @@ export default function EquityCurve({ trades, baseCapital, height = 180 }) {
     if (!svgRef.current) return;
     const rect = svgRef.current.getBoundingClientRect();
     const mouseX = ((e.clientX - rect.left) / rect.width) * width;
-    let closest = 0;
+    const mouseY = ((e.clientY - rect.top) / rect.height) * height;
+    let closest = null;
     let minDist = Infinity;
     points.forEach((p, i) => {
-      const dist = Math.abs(toX(p.x) - mouseX);
+      if (i === 0) return; // skip start point
+      const px = toX(p.x);
+      const py = toY(p.y);
+      const dist = Math.sqrt((px - mouseX) ** 2 + (py - mouseY) ** 2);
       if (dist < minDist) { minDist = dist; closest = i; }
     });
-    setHoverIdx(closest);
+    // Only show tooltip if within 25px of a point
+    if (minDist < 25) {
+      setHoverIdx(closest);
+    } else {
+      setHoverIdx(null);
+    }
   }, [points]);
 
   const handleClick = () => {
@@ -144,12 +153,20 @@ export default function EquityCurve({ trades, baseCapital, height = 180 }) {
             <line x1={padding.left} y1={toY(baseCapital)} x2={width - padding.right} y2={toY(baseCapital)} stroke="var(--txt-3)" strokeWidth="0.5" strokeDasharray="4 3" />
           )}
 
-          {/* Day dots */}
+          {/* Day dots with hit areas */}
           {points.map((p, i) => i > 0 && (
-            <circle key={i} cx={toX(p.x)} cy={toY(p.y)} r={hoverIdx === i ? 5 : 3}
-              fill={p.dayPnl >= 0 ? 'var(--profit)' : 'var(--loss)'}
-              stroke="var(--bg-card)" strokeWidth="1.5"
-              style={{ transition: 'r 0.1s' }} />
+            <g key={i} style={{ cursor: 'pointer' }}
+              onClick={(e) => { e.stopPropagation(); if (p.date) setSelectedDay(p); }}
+              onMouseEnter={() => setHoverIdx(i)}
+              onMouseLeave={() => setHoverIdx(null)}>
+              {/* Invisible larger hit area */}
+              <circle cx={toX(p.x)} cy={toY(p.y)} r="15" fill="transparent" />
+              {/* Visible dot */}
+              <circle cx={toX(p.x)} cy={toY(p.y)} r={hoverIdx === i ? 6 : 4}
+                fill={p.dayPnl >= 0 ? 'var(--profit)' : 'var(--loss)'}
+                stroke="var(--bg-card)" strokeWidth="2"
+                style={{ transition: 'r 0.15s ease' }} />
+            </g>
           ))}
 
           {/* Hover vertical line */}
