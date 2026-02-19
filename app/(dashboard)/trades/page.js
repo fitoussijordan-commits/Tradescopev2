@@ -10,7 +10,16 @@ export default function TradesPage() {
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState('all');
   const [deleting, setDeleting] = useState(null);
-  const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '' });
+  const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '' });
+
+  // Calculate current capital for balance mode
+  const currentCapital = (() => {
+    if (!currentAccount) return 0;
+    const accountTrades = trades.filter(t => t.account_id === currentAccountId);
+    return parseFloat(currentAccount.base_capital) + accountTrades.reduce((s, t) => s + parseFloat(t.pnl), 0);
+  })();
+
+  const computedPnl = form.balanceMode && form.balance !== '' ? (parseFloat(form.balance) - currentCapital) : null;
 
   useEffect(() => { loadData(); }, [currentAccountId]);
 
@@ -29,7 +38,8 @@ export default function TradesPage() {
     const { data: { user } } = await supabase.auth.getUser();
     const account = accounts.find(a => a.id === currentAccountId);
     if (!account || !user) return;
-    const pnl = parseFloat(form.pnl);
+    const pnl = form.balanceMode ? computedPnl : parseFloat(form.pnl);
+    if (pnl === null || isNaN(pnl)) { alert('Remplis le P&L ou le solde'); return; }
     const risk = parseFloat(form.risk) || null;
     const accountTrades = trades.filter(t => t.account_id === currentAccountId);
     const currentCapital = parseFloat(account.base_capital) + accountTrades.reduce((s, t) => s + parseFloat(t.pnl), 0);
@@ -38,7 +48,7 @@ export default function TradesPage() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ account_id: currentAccountId, date: form.date, instrument: form.is_payout ? null : form.instrument, type: form.is_payout ? null : form.type, pnl: form.is_payout && pnl > 0 ? -pnl : pnl, risk, pnl_percent: pnlPercent, size: parseFloat(form.size) || null, trading_view_link: form.trading_view_link || null, followed_strategy: form.followed_strategy, notes: form.notes || null, is_payout: form.is_payout, session: form.session || null }),
     });
-    if (res.ok) { setShowModal(false); setForm({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '' }); loadData(); }
+    if (res.ok) { setShowModal(false); setForm({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '' }); loadData(); }
     else { const err = await res.json(); alert(err.error); }
   };
 
@@ -134,7 +144,25 @@ export default function TradesPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Date</label><input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
-                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">P&L (€)</label><input type="number" step="0.01" value={form.pnl} onChange={e => setForm({...form, pnl: e.target.value})} required placeholder="-250" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono">{form.balanceMode ? 'Solde compte (€)' : 'P&L (€)'}</label>
+                    <button type="button" onClick={() => setForm({...form, balanceMode: !form.balanceMode, pnl: '', balance: ''})}
+                      className="text-[0.55rem] font-bold text-accent hover:underline">{form.balanceMode ? '→ Mode P&L' : '→ Mode Solde'}</button>
+                  </div>
+                  {form.balanceMode ? (
+                    <div>
+                      <input type="number" step="0.01" value={form.balance} onChange={e => setForm({...form, balance: e.target.value})} required placeholder={currentCapital.toFixed(2)} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" />
+                      {form.balance !== '' && computedPnl !== null && (
+                        <div className={`mt-1.5 text-xs font-mono font-bold ${computedPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                          P&L calculé : {computedPnl >= 0 ? '+' : ''}{computedPnl.toFixed(2)}€
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <input type="number" step="0.01" value={form.pnl} onChange={e => setForm({...form, pnl: e.target.value})} required placeholder="-250" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" />
+                  )}
+                </div>
               </div>
               {!form.is_payout && (<>
                 <div className="grid grid-cols-2 gap-3">
