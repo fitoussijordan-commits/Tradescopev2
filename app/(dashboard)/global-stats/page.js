@@ -37,12 +37,22 @@ export default function GlobalStatsPage() {
   const rrTrades = at.filter(t => t.rr != null);
   const avgRR = rrTrades.length > 0 ? (rrTrades.reduce((s, t) => s + parseFloat(t.rr), 0) / rrTrades.length).toFixed(2) : null;
 
-  // Day performance
+  // Day performance - detailed
   const dayNames = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-  const dayPnl = {};
-  dayNames.forEach(d => dayPnl[d] = 0);
-  at.forEach(t => { const di = new Date(t.date).getDay(); dayPnl[dayNames[di === 0 ? 6 : di - 1]] += parseFloat(t.pnl); });
-  const maxDay = Math.max(...Object.values(dayPnl).map(Math.abs), 1);
+  const dayStats = {};
+  dayNames.forEach(d => dayStats[d] = { pnl: 0, trades: 0, wins: 0, losses: 0 });
+  at.forEach(t => {
+    const di = new Date(t.date).getDay();
+    const name = dayNames[di === 0 ? 6 : di - 1];
+    const pnl = parseFloat(t.pnl);
+    dayStats[name].pnl += pnl;
+    dayStats[name].trades++;
+    if (pnl > 0) dayStats[name].wins++;
+    else if (pnl < 0) dayStats[name].losses++;
+  });
+  const activeDays = dayNames.filter(d => dayStats[d].trades > 0);
+  const dayRanking = [...activeDays].sort((a, b) => dayStats[b].pnl - dayStats[a].pnl);
+  const maxDayPnl = Math.max(...activeDays.map(d => Math.abs(dayStats[d].pnl)), 1);
 
   // Account comparison
   const accountStats = accounts.map(a => {
@@ -96,22 +106,74 @@ export default function GlobalStatsPage() {
           );
         })}
 
-        {/* Day performance */}
-        <div className="bg-bg-card border border-brd rounded-xl p-5">
+        {/* Day performance - detailed */}
+        <div className="bg-bg-card border border-brd rounded-xl p-5 lg:col-span-2">
           <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">Performance par Jour (Global)</h3>
-          <div className="space-y-2.5">
-            {dayNames.map(d => (
-              <div key={d} className="flex items-center gap-3">
-                <span className="text-xs text-txt-2 w-8 font-mono">{d.substring(0, 3)}</span>
-                <div className="flex-1 h-5 bg-bg-secondary rounded overflow-hidden">
-                  <div className="h-full rounded transition-all" style={{ width: `${(Math.abs(dayPnl[d]) / maxDay) * 100}%`, background: dayPnl[d] >= 0 ? 'var(--profit)' : 'var(--loss, #EF4444)' }} />
+          
+          {activeDays.length > 0 ? (
+            <>
+              {/* Best / Worst summary */}
+              {dayRanking.length >= 2 && (
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  <div className="bg-profit/10 border border-profit/20 rounded-lg p-3 text-center">
+                    <div className="text-[0.55rem] text-profit font-mono font-bold uppercase tracking-wider mb-1">🏆 Meilleur jour</div>
+                    <div className="font-display font-bold text-lg">{dayRanking[0]}</div>
+                    <div className="text-profit font-mono font-bold text-sm">{fmt(dayStats[dayRanking[0]].pnl)}</div>
+                    <div className="text-txt-2 text-[0.65rem] mt-0.5">{dayStats[dayRanking[0]].trades} trades · {dayStats[dayRanking[0]].trades > 0 ? ((dayStats[dayRanking[0]].wins / dayStats[dayRanking[0]].trades) * 100).toFixed(0) : 0}% WR</div>
+                  </div>
+                  <div className="bg-loss/10 border border-loss/20 rounded-lg p-3 text-center">
+                    <div className="text-[0.55rem] text-loss font-mono font-bold uppercase tracking-wider mb-1">⚠️ Pire jour</div>
+                    <div className="font-display font-bold text-lg">{dayRanking[dayRanking.length - 1]}</div>
+                    <div className="text-loss font-mono font-bold text-sm">{fmt(dayStats[dayRanking[dayRanking.length - 1]].pnl)}</div>
+                    <div className="text-txt-2 text-[0.65rem] mt-0.5">{dayStats[dayRanking[dayRanking.length - 1]].trades} trades · {dayStats[dayRanking[dayRanking.length - 1]].trades > 0 ? ((dayStats[dayRanking[dayRanking.length - 1]].wins / dayStats[dayRanking[dayRanking.length - 1]].trades) * 100).toFixed(0) : 0}% WR</div>
+                  </div>
                 </div>
-                <span className={`text-xs font-mono font-bold w-16 text-right ${dayPnl[d] >= 0 ? 'text-profit' : 'text-loss'}`}>
-                  {dayPnl[d] >= 0 ? '+' : ''}{dayPnl[d].toFixed(0)}€
-                </span>
+              )}
+
+              {/* Bar chart + detail table */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Bars */}
+                <div className="space-y-2.5">
+                  {dayNames.filter(d => dayStats[d].trades > 0).map(d => (
+                    <div key={d} className="flex items-center gap-3">
+                      <span className="text-xs text-txt-2 w-10 font-mono font-semibold">{d.substring(0, 3)}</span>
+                      <div className="flex-1 h-6 bg-bg-secondary rounded overflow-hidden">
+                        <div className="h-full rounded transition-all" style={{ width: `${(Math.abs(dayStats[d].pnl) / maxDayPnl) * 100}%`, background: dayStats[d].pnl >= 0 ? 'var(--profit)' : 'var(--loss, #EF4444)' }} />
+                      </div>
+                      <span className={`text-xs font-mono font-bold w-16 text-right ${dayStats[d].pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                        {dayStats[d].pnl >= 0 ? '+' : ''}{dayStats[d].pnl.toFixed(0)}€
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Detail table */}
+                <div>
+                  <div className="grid grid-cols-5 gap-1 text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider mb-2 px-2">
+                    <span>Jour</span><span className="text-center">Trades</span><span className="text-center">WR</span><span className="text-center">Moy/trade</span><span className="text-right">P&L</span>
+                  </div>
+                  <div className="space-y-1">
+                    {dayRanking.map((d, i) => {
+                      const s = dayStats[d];
+                      const wr = s.trades > 0 ? ((s.wins / s.trades) * 100).toFixed(0) : 0;
+                      const avg = s.trades > 0 ? s.pnl / s.trades : 0;
+                      return (
+                        <div key={d} className={`grid grid-cols-5 gap-1 items-center px-2 py-2 rounded-lg text-sm ${i === 0 ? 'bg-profit/10 border border-profit/15' : i === dayRanking.length - 1 ? 'bg-loss/10 border border-loss/15' : 'bg-bg-secondary'}`}>
+                          <span className="font-bold text-xs">{d.substring(0, 3)}</span>
+                          <span className="text-center font-mono text-xs">{s.trades}</span>
+                          <span className={`text-center font-mono font-bold text-xs ${wr >= 50 ? 'text-profit' : 'text-loss'}`}>{wr}%</span>
+                          <span className={`text-center font-mono text-xs ${avg >= 0 ? 'text-profit' : 'text-loss'}`}>{avg >= 0 ? '+' : ''}{avg.toFixed(0)}€</span>
+                          <span className={`text-right font-mono font-bold text-xs ${s.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{s.pnl >= 0 ? '+' : ''}{s.pnl.toFixed(0)}€</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
+            </>
+          ) : (
+            <div className="text-txt-3 text-center text-sm py-8">Pas assez de données</div>
+          )}
         </div>
 
         {/* Account comparison */}
