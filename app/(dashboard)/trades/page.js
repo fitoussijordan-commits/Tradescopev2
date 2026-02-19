@@ -10,7 +10,7 @@ export default function TradesPage() {
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState('all');
   const [deleting, setDeleting] = useState(null);
-  const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false });
+  const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '' });
 
   useEffect(() => { loadData(); }, [currentAccountId]);
 
@@ -36,9 +36,9 @@ export default function TradesPage() {
     const pnlPercent = (pnl / currentCapital) * 100;
     const res = await fetch('/api/trades', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ account_id: currentAccountId, date: form.date, instrument: form.is_payout ? null : form.instrument, type: form.is_payout ? null : form.type, pnl: form.is_payout && pnl > 0 ? -pnl : pnl, risk, pnl_percent: pnlPercent, size: parseFloat(form.size) || null, trading_view_link: form.trading_view_link || null, followed_strategy: form.followed_strategy, notes: form.notes || null, is_payout: form.is_payout }),
+      body: JSON.stringify({ account_id: currentAccountId, date: form.date, instrument: form.is_payout ? null : form.instrument, type: form.is_payout ? null : form.type, pnl: form.is_payout && pnl > 0 ? -pnl : pnl, risk, pnl_percent: pnlPercent, size: parseFloat(form.size) || null, trading_view_link: form.trading_view_link || null, followed_strategy: form.followed_strategy, notes: form.notes || null, is_payout: form.is_payout, session: form.session || null }),
     });
-    if (res.ok) { setShowModal(false); setForm({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false }); loadData(); }
+    if (res.ok) { setShowModal(false); setForm({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '' }); loadData(); }
     else { const err = await res.json(); alert(err.error); }
   };
 
@@ -97,6 +97,7 @@ export default function TradesPage() {
                   <span className="font-bold">{t.instrument || '-'}</span>
                   <span className={'inline-block px-2 py-0.5 rounded text-[0.6rem] font-bold uppercase font-mono ' + (t.type === 'LONG' ? 'bg-profit-dim text-profit' : 'bg-loss-dim text-loss')}>{t.type}</span>
                   {t.followed_strategy && <span className="text-profit text-xs">✓</span>}
+                  {t.session && <span className={`text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono ${t.session === 'london' ? 'bg-blue-500/15 text-blue-400' : 'bg-amber-500/15 text-amber-400'}`}>{t.session === 'london' ? '🇬🇧 AM' : '🇺🇸 PM'}</span>}
                 </div>
                 <div className="text-[0.78rem] text-txt-2 font-mono mt-0.5">{new Date(t.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
               </div>
@@ -146,6 +147,14 @@ export default function TradesPage() {
                 </div>
                 <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Lien TradingView</label><input type="url" value={form.trading_view_link} onChange={e => setForm({...form, trading_view_link: e.target.value})} placeholder="https://..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
                 <div className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border border-brd"><input type="checkbox" id="strategy" checked={form.followed_strategy} onChange={e => setForm({...form, followed_strategy: e.target.checked})} className="accent-accent w-4 h-4" /><label htmlFor="strategy" className="text-sm">Stratégie respectée</label></div>
+                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Session</label>
+                  <div className="flex gap-2">
+                    {[['','Aucune'],['london','🇬🇧 Londres AM'],['us','🇺🇸 US PM']].map(([v,l]) => (
+                      <button key={v} type="button" onClick={() => setForm({...form, session: v})}
+                        className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-95 ${form.session === v ? 'bg-accent text-white' : 'bg-bg-secondary border border-brd text-txt-2 hover:border-accent'}`}>{l}</button>
+                    ))}
+                  </div>
+                </div>
               </>)}
               <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Notes</label><textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows="2" placeholder="Notes..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent resize-none" /></div>
               <div className="flex gap-3 pt-2">

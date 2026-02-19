@@ -50,6 +50,7 @@ export async function POST(request) {
     followed_strategy: body.followed_strategy || false,
     notes: body.notes || null,
     is_payout: body.is_payout || false,
+    session: body.session || null,
   }).select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

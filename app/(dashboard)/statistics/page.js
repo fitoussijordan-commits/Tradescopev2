@@ -52,6 +52,17 @@ export default function StatisticsPage() {
   const bestRR = rrTrades.length > 0 ? Math.max(...rrTrades.map(t => parseFloat(t.rr))).toFixed(2) : null;
   const worstRR = rrTrades.length > 0 ? Math.min(...rrTrades.map(t => parseFloat(t.rr))).toFixed(2) : null;
 
+  // Session performance
+  const londonTrades = at.filter(t => t.session === 'london');
+  const usTrades = at.filter(t => t.session === 'us');
+  const noSessionTrades = at.filter(t => !t.session);
+  const londonPnl = londonTrades.reduce((s, t) => s + parseFloat(t.pnl), 0);
+  const usPnl = usTrades.reduce((s, t) => s + parseFloat(t.pnl), 0);
+  const londonWR = londonTrades.length > 0 ? ((londonTrades.filter(t => t.pnl > 0).length / londonTrades.length) * 100).toFixed(0) : 0;
+  const usWR = usTrades.length > 0 ? ((usTrades.filter(t => t.pnl > 0).length / usTrades.length) * 100).toFixed(0) : 0;
+  const londonAvg = londonTrades.length > 0 ? londonPnl / londonTrades.length : 0;
+  const usAvg = usTrades.length > 0 ? usPnl / usTrades.length : 0;
+
   // Best instruments
   const instPnl = {};
   at.forEach(t => { if (t.instrument) { instPnl[t.instrument] = (instPnl[t.instrument] || 0) + parseFloat(t.pnl); } });
@@ -137,6 +148,48 @@ export default function StatisticsPage() {
             <div><div className="text-[0.65rem] text-txt-3 font-mono mb-1">Meilleur</div><div className="font-bold font-mono text-profit">{bestRR ? `+${bestRR}R` : '—'}</div></div>
             <div><div className="text-[0.65rem] text-txt-3 font-mono mb-1">Pire</div><div className="font-bold font-mono text-loss">{worstRR ? `${worstRR}R` : '—'}</div></div>
           </div>
+        </div>
+
+        {/* Session Performance */}
+        <div className="bg-bg-card border border-brd rounded-xl p-5">
+          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">🇬🇧 Londres vs 🇺🇸 US</h3>
+          {(londonTrades.length > 0 || usTrades.length > 0) ? (
+            <>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-center">
+                  <div className="text-[0.65rem] font-mono text-blue-400 font-bold mb-2">🇬🇧 LONDRES AM</div>
+                  <div className={`text-xl font-bold font-display ${londonPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(londonPnl)}</div>
+                  <div className="text-xs text-txt-2 mt-1">{londonTrades.length} trades | {londonWR}% WR</div>
+                </div>
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 text-center">
+                  <div className="text-[0.65rem] font-mono text-amber-400 font-bold mb-2">🇺🇸 US PM</div>
+                  <div className={`text-xl font-bold font-display ${usPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(usPnl)}</div>
+                  <div className="text-xs text-txt-2 mt-1">{usTrades.length} trades | {usWR}% WR</div>
+                </div>
+              </div>
+              <div className="border-t border-brd pt-3 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-txt-3">Moy. Londres</span>
+                  <span className={`font-bold font-mono text-sm ${londonAvg >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(londonAvg)}/trade</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-txt-3">Moy. US</span>
+                  <span className={`font-bold font-mono text-sm ${usAvg >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(usAvg)}/trade</span>
+                </div>
+                {(londonTrades.length > 0 && usTrades.length > 0) && (
+                  <div className="flex justify-between items-center pt-2 border-t border-brd">
+                    <span className="text-xs text-txt-3 font-semibold">Meilleure session</span>
+                    <span className="font-bold text-sm">{londonAvg > usAvg ? '🇬🇧 Londres' : londonAvg < usAvg ? '🇺🇸 US' : '= Egal'}</span>
+                  </div>
+                )}
+              </div>
+              {noSessionTrades.length > 0 && (
+                <div className="mt-3 text-[0.65rem] text-txt-3 text-center">{noSessionTrades.length} trade{noSessionTrades.length > 1 ? 's' : ''} sans session</div>
+              )}
+            </>
+          ) : (
+            <div className="text-txt-3 text-center text-sm py-4">Ajoute une session (Londres / US) a tes trades pour voir les stats</div>
+          )}
         </div>
 
         {/* Best Instruments */}
