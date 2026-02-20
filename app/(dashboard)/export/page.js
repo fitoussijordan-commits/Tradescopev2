@@ -104,13 +104,17 @@ export default function ExportPage() {
     const greenFont = { color: { argb: 'FF006100' } };
     const redFont = { color: { argb: 'FF9C0006' } };
     const white = 'FFFFFFFF';
+    const thinBorder = { style: 'thin', color: { argb: 'FF999999' } };
+    const medBorder = { style: 'medium', color: { argb: 'FF1B2A4A' } };
+    const allThin = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
+    const lightGray = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
 
     monthKeys.forEach((mk) => {
       const [yr, mo] = mk.split('-').map(Number);
       const monthTrades = tradesByMonth[mk];
       const ws = wb.addWorksheet(`${monthNames[mo - 1]} ${yr}`);
 
-      // Column widths - BIGGER
+      // Column widths
       ws.getColumn(1).width = 8;
       ws.getColumn(2).width = 18;
       ws.getColumn(3).width = 16;
@@ -118,16 +122,16 @@ export default function ExportPage() {
       ws.getColumn(5).width = 12;
       ws.getColumn(6).width = 20;
       ws.getColumn(7).width = 20;
-      ws.getColumn(8).width = 4; // spacer
 
-      // Row 1 - Title
+      // Row 1 - Logo + Title
       ws.mergeCells('A1:G1');
       const t1 = ws.getCell('A1');
-      t1.value = `MOIS - ${monthNames[mo - 1].toUpperCase()} ${yr}`;
-      t1.font = { bold: true, size: 16, color: { argb: white } };
+      t1.value = `◈ TRADESCOPE — ${monthNames[mo - 1].toUpperCase()} ${yr}`;
+      t1.font = { bold: true, size: 16, color: { argb: white }, name: 'Calibri' };
       t1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: darkBlue } };
       t1.alignment = { horizontal: 'center', vertical: 'middle' };
-      ws.getRow(1).height = 36;
+      t1.border = { bottom: medBorder };
+      ws.getRow(1).height = 40;
 
       // Calculate starting capital for this month
       let startCapital = parseFloat(account.base_capital);
@@ -138,45 +142,70 @@ export default function ExportPage() {
       }
 
       // Row 2 - Capital de base + Perte max
+      const infoBg = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
+      ws.mergeCells('A2:C2');
       ws.getCell('A2').value = 'Capital de base';
       ws.getCell('A2').font = { bold: true, size: 11 };
-      ws.mergeCells('A2:C2');
+      ws.getCell('A2').fill = infoBg;
+      ws.getCell('A2').border = allThin;
       ws.getCell('D2').value = parseFloat(account.base_capital);
       ws.getCell('D2').numFmt = '#,##0.00 €';
       ws.getCell('D2').font = { bold: true, size: 11 };
+      ws.getCell('D2').fill = infoBg;
+      ws.getCell('D2').border = allThin;
+      ws.getCell('E2').fill = infoBg;
+      ws.getCell('E2').border = allThin;
       ws.getCell('F2').value = 'Perte Max autorisee';
       ws.getCell('F2').font = { bold: true, size: 10 };
+      ws.getCell('F2').fill = infoBg;
+      ws.getCell('F2').border = allThin;
       ws.getCell('G2').value = params.maxLoss / 100;
       ws.getCell('G2').numFmt = '0.0%';
       ws.getCell('G2').font = { bold: true, size: 12, color: { argb: 'FFFF0000' } };
       ws.getCell('G2').fill = redFill;
-      ws.getRow(2).height = 22;
+      ws.getCell('G2').border = allThin;
+      ws.getRow(2).height = 24;
 
       // Row 3 - Capital en cours + Obj/S
       const monthPnl = monthTrades.reduce((s, t) => s + parseFloat(t.pnl), 0);
+      ws.mergeCells('A3:C3');
       ws.getCell('A3').value = 'Capital en cours';
       ws.getCell('A3').font = { bold: true, size: 11 };
-      ws.mergeCells('A3:C3');
+      ws.getCell('A3').fill = infoBg;
+      ws.getCell('A3').border = allThin;
       ws.getCell('D3').value = startCapital + monthPnl;
       ws.getCell('D3').numFmt = '#,##0.00 €';
       ws.getCell('D3').font = { bold: true, size: 11 };
+      ws.getCell('D3').fill = infoBg;
+      ws.getCell('D3').border = allThin;
+      ws.getCell('E3').fill = infoBg;
+      ws.getCell('E3').border = allThin;
       ws.getCell('F3').value = 'Obj/S gain en % =';
       ws.getCell('F3').font = { bold: true, size: 10 };
+      ws.getCell('F3').fill = infoBg;
+      ws.getCell('F3').border = allThin;
       ws.getCell('G3').value = params.objWeekPct / 100;
       ws.getCell('G3').numFmt = '0.0%';
       ws.getCell('G3').font = { bold: true, size: 11 };
-      ws.getRow(3).height = 22;
+      ws.getCell('G3').fill = infoBg;
+      ws.getCell('G3').border = allThin;
+      ws.getRow(3).height = 24;
 
       // Row 4 - Obj/J
+      for (let c = 1; c <= 5; c++) { ws.getRow(4).getCell(c).fill = infoBg; ws.getRow(4).getCell(c).border = allThin; }
       ws.getCell('F4').value = 'Obj/J en % =';
       ws.getCell('F4').font = { bold: true, size: 10 };
+      ws.getCell('F4').fill = infoBg;
+      ws.getCell('F4').border = allThin;
       ws.getCell('G4').value = params.objDayPct / 100;
       ws.getCell('G4').numFmt = '0.0%';
       ws.getCell('G4').font = { bold: true, size: 11 };
-      ws.getRow(4).height = 22;
+      ws.getCell('G4').fill = infoBg;
+      ws.getCell('G4').border = allThin;
+      ws.getRow(4).height = 24;
 
-      // Row 5 - empty
-      ws.getRow(5).height = 8;
+      // Row 5 - spacer
+      ws.getRow(5).height = 6;
 
       // Row 6 - Column headers
       const headers = ['Sem.', 'Capital', 'Obj Gain /J', 'Profits/Pertes / J', '% / J', 'Avance et retard', 'Profit mensuel'];
@@ -187,8 +216,9 @@ export default function ExportPage() {
         c.font = { bold: true, color: { argb: white }, size: 11 };
         c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
         c.alignment = { horizontal: 'center', vertical: 'middle' };
+        c.border = { top: medBorder, bottom: medBorder, left: { style: 'thin', color: { argb: 'FF4A5C8A' } }, right: { style: 'thin', color: { argb: 'FF4A5C8A' } } };
       });
-      hRow.height = 26;
+      hRow.height = 28;
 
       // Build weeks (Mon-Fri)
       const daysInMonth = new Date(yr, mo, 0).getDate();
@@ -206,6 +236,7 @@ export default function ExportPage() {
       let cumPnl = 0;
       const objPerDay = startCapital * (params.objDayPct / 100);
       const dataStartRow = 7;
+      let globalRowIdx = 0;
 
       weeks.forEach((week, wIdx) => {
         let weekPnl = 0;
@@ -217,17 +248,22 @@ export default function ExportPage() {
           weekPnl += dayPnl;
 
           const r = ws.getRow(row);
-          r.height = 20;
+          r.height = 22;
+          const zebra = globalRowIdx % 2 === 1 ? lightGray : null;
 
           // B: Capital
           r.getCell(2).value = cumCapital;
           r.getCell(2).numFmt = '#,##0.00 €';
           r.getCell(2).font = { size: 10 };
+          r.getCell(2).border = allThin;
+          if (zebra) r.getCell(2).fill = zebra;
 
           // C: Obj Gain /J
           r.getCell(3).value = objPerDay;
           r.getCell(3).numFmt = '#,##0.00€';
           r.getCell(3).font = { bold: true, size: 10 };
+          r.getCell(3).border = allThin;
+          if (zebra) r.getCell(3).fill = zebra;
 
           // D: Profits/Pertes / J
           r.getCell(4).value = dayPnl;
@@ -235,19 +271,33 @@ export default function ExportPage() {
           r.getCell(4).font = { size: 10, ...(dayPnl > 0 ? greenFont : dayPnl < 0 ? redFont : {}) };
           if (dayPnl > 0) r.getCell(4).fill = greenFill;
           else if (dayPnl < 0) r.getCell(4).fill = redFill;
+          else if (zebra) r.getCell(4).fill = zebra;
+          r.getCell(4).border = allThin;
 
           // E: % / J
           const pct = cumCapital > 0 ? dayPnl / cumCapital : 0;
           r.getCell(5).value = pct;
           r.getCell(5).numFmt = '0.0%';
           r.getCell(5).font = { size: 10, ...(dayPnl < 0 ? redFont : dayPnl > 0 ? greenFont : {}) };
+          r.getCell(5).border = allThin;
+          if (zebra && dayPnl === 0) r.getCell(5).fill = zebra;
+
+          // F & G placeholders for borders
+          r.getCell(6).border = allThin;
+          r.getCell(7).border = allThin;
+          if (zebra) { r.getCell(6).fill = zebra; r.getCell(7).fill = zebra; }
+
+          // A: border
+          r.getCell(1).border = allThin;
+          if (zebra) r.getCell(1).fill = zebra;
 
           cumCapital += dayPnl;
           cumPnl += dayPnl;
           row++;
+          globalRowIdx++;
         });
 
-        // F: Avance et retard - write on FIRST cell of week BEFORE merging
+        // F: Avance et retard
         const weekPct = startCapital > 0 ? weekPnl / startCapital : 0;
         const avanceCell = ws.getRow(weekStartRow).getCell(6);
         avanceCell.value = weekPct;
@@ -256,8 +306,9 @@ export default function ExportPage() {
         avanceCell.font = { bold: true, size: 11, ...(weekPnl < 0 ? redFont : weekPnl > 0 ? greenFont : {}) };
         if (weekPnl < 0) avanceCell.fill = redFill;
         else if (weekPnl > 0) avanceCell.fill = greenFill;
+        avanceCell.border = allThin;
 
-        // A: Week label on FIRST cell BEFORE merging
+        // A: Week label
         ws.getRow(weekStartRow).getCell(1).value = `s${wIdx + 1}`;
         ws.getRow(weekStartRow).getCell(1).font = { bold: true, size: 11 };
         ws.getRow(weekStartRow).getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -271,7 +322,7 @@ export default function ExportPage() {
 
       const dataEndRow = row - 1;
 
-      // G: Profit mensuel - write on FIRST cell BEFORE merging
+      // G: Profit mensuel
       if (dataEndRow >= dataStartRow) {
         const profitCell = ws.getRow(dataStartRow).getCell(7);
         profitCell.value = cumPnl;
@@ -279,14 +330,23 @@ export default function ExportPage() {
         profitCell.font = { bold: true, size: 16, ...(cumPnl >= 0 ? greenFont : redFont) };
         profitCell.fill = cumPnl >= 0 ? greenFill : redFill;
         profitCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        profitCell.border = allThin;
         if (dataEndRow > dataStartRow) {
           ws.mergeCells(dataStartRow, 7, dataEndRow, 7);
         }
       }
 
-      // Total row
+      // Total row with thick top border
       const totalRow = ws.getRow(row);
-      totalRow.height = 24;
+      totalRow.height = 26;
+      const totalBorderTop = { top: medBorder, bottom: medBorder, left: thinBorder, right: thinBorder };
+      for (let c = 1; c <= 7; c++) {
+        totalRow.getCell(c).border = totalBorderTop;
+        totalRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
+      }
+      totalRow.getCell(3).value = 'TOTAL';
+      totalRow.getCell(3).font = { bold: true, size: 11 };
+      totalRow.getCell(3).alignment = { horizontal: 'right', vertical: 'middle' };
       totalRow.getCell(4).value = cumPnl;
       totalRow.getCell(4).numFmt = '#,##0.00 €';
       totalRow.getCell(4).font = { bold: true, size: 12, ...(cumPnl >= 0 ? greenFont : redFont) };
@@ -297,19 +357,21 @@ export default function ExportPage() {
       totalRow.getCell(5).font = { bold: true, size: 12, ...(cumPnl >= 0 ? greenFont : redFont) };
       totalRow.getCell(5).fill = cumPnl >= 0 ? greenFill : redFill;
 
-      // Borders on all data cells
-      for (let r = 7; r <= row; r++) {
-        for (let c = 1; c <= 7; c++) {
-          const cell = ws.getRow(r).getCell(c);
-          cell.border = {
-            top: { style: 'hair', color: { argb: 'FFD0D0D0' } },
-            bottom: { style: 'hair', color: { argb: 'FFD0D0D0' } },
-            left: { style: 'hair', color: { argb: 'FFD0D0D0' } },
-            right: { style: 'hair', color: { argb: 'FFD0D0D0' } },
-          };
-          if (!cell.alignment) cell.alignment = {};
-          cell.alignment.vertical = 'middle';
-        }
+      // Footer row
+      const footerRow = ws.getRow(row + 2);
+      ws.mergeCells(row + 2, 1, row + 2, 7);
+      footerRow.getCell(1).value = 'Généré par TradeScope · tradescopev2.fr';
+      footerRow.getCell(1).font = { italic: true, size: 9, color: { argb: 'FF999999' } };
+      footerRow.getCell(1).alignment = { horizontal: 'center' };
+
+      // Outer border around data table (row 6 to total row)
+      for (let r = 6; r <= row; r++) {
+        ws.getRow(r).getCell(1).border = { ...ws.getRow(r).getCell(1).border, left: medBorder };
+        ws.getRow(r).getCell(7).border = { ...ws.getRow(r).getCell(7).border, right: medBorder };
+      }
+      for (let c = 1; c <= 7; c++) {
+        ws.getRow(6).getCell(c).border = { ...ws.getRow(6).getCell(c).border, top: medBorder };
+        ws.getRow(row).getCell(c).border = { ...ws.getRow(row).getCell(c).border, bottom: medBorder };
       }
     });
 
