@@ -104,19 +104,24 @@ export default function AccountPage() {
     }
   };
 
-  // Load PayPal SDK
+  // Load PayPal SDK once
   useEffect(() => {
     if (!selectedPlan || !paypalPlans) return;
+    
+    // Already loaded
+    if (window.paypal) {
+      setPaypalReady(true);
+      return;
+    }
+
+    const existing = document.getElementById('paypal-sdk');
+    if (existing) {
+      // Wait for it to load
+      existing.addEventListener('load', () => setPaypalReady(true));
+      return;
+    }
+
     setPaypalReady(false);
-
-    // Remove old script
-    const old = document.getElementById('paypal-sdk');
-    if (old) old.remove();
-
-    // Remove old buttons
-    const container = document.getElementById('paypal-button-container');
-    if (container) container.innerHTML = '';
-
     const script = document.createElement('script');
     script.id = 'paypal-sdk';
     script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&vault=true&intent=subscription&currency=EUR`;
@@ -124,14 +129,9 @@ export default function AccountPage() {
       setPaypalReady(true);
     });
     document.head.appendChild(script);
-
-    return () => {
-      const s = document.getElementById('paypal-sdk');
-      if (s) s.remove();
-    };
   }, [selectedPlan, paypalPlans]);
 
-  // Render PayPal buttons
+  // Render PayPal buttons when ready or plan changes
   useEffect(() => {
     if (!paypalReady || !selectedPlan || !paypalPlans || !window.paypal) return;
 
@@ -142,37 +142,41 @@ export default function AccountPage() {
     const planId = paypalPlans[selectedPlan];
     if (!planId) return;
 
-    window.paypal.Buttons({
-      style: { shape: 'rect', color: 'blue', layout: 'vertical', label: 'subscribe' },
-      createSubscription: function(data, actions) {
-        return actions.subscription.create({ plan_id: planId });
-      },
-      onApprove: async function(data) {
-        setPlanLoading(selectedPlan);
-        try {
-          const res = await fetch('/api/paypal/subscribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subscriptionId: data.subscriptionID, plan: selectedPlan }),
-          });
-          if (res.ok) {
-            window.location.href = '/dashboard?checkout=success';
-          } else {
-            const d = await res.json();
-            alert(d.error || 'Erreur lors de l\'activation');
+    try {
+      window.paypal.Buttons({
+        style: { shape: 'rect', color: 'blue', layout: 'vertical', label: 'subscribe' },
+        createSubscription: function(data, actions) {
+          return actions.subscription.create({ plan_id: planId });
+        },
+        onApprove: async function(data) {
+          setPlanLoading(selectedPlan);
+          try {
+            const res = await fetch('/api/paypal/subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ subscriptionId: data.subscriptionID, plan: selectedPlan }),
+            });
+            if (res.ok) {
+              window.location.href = '/dashboard?checkout=success';
+            } else {
+              const d = await res.json();
+              alert(d.error || 'Erreur lors de l\'activation');
+              setPlanLoading(null);
+            }
+          } catch (err) {
+            alert('Erreur de connexion');
             setPlanLoading(null);
           }
-        } catch (err) {
-          alert('Erreur de connexion');
+        },
+        onError: function(err) {
+          console.error('PayPal error:', err);
+          alert('Erreur PayPal. Réessaie.');
           setPlanLoading(null);
-        }
-      },
-      onError: function(err) {
-        console.error('PayPal error:', err);
-        alert('Erreur PayPal. Réessaie.');
-        setPlanLoading(null);
-      },
-    }).render('#paypal-button-container');
+        },
+      }).render('#paypal-button-container');
+    } catch (err) {
+      console.error('PayPal render error:', err);
+    }
   }, [paypalReady, selectedPlan, paypalPlans]);
 
   if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
