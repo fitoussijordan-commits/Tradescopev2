@@ -24,9 +24,7 @@ function RegisterForm() {
     });
     if (signUpError) { setError(signUpError.message); setLoading(false); return; }
     if (data.session) {
-      const res = await fetch('/api/stripe/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan }) });
-      const { url } = await res.json();
-      if (url) window.location.href = url;
+      window.location.href = '/account';
     } else { setError('Verifie ta boite mail pour confirmer ton compte !'); }
     setLoading(false);
   };

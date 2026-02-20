@@ -56,7 +56,7 @@ export default function CGVPage() {
 
           <section>
             <h2 className="font-display font-bold text-lg text-txt-1 mb-3">Article 5 - Inscription et Paiement</h2>
-            <p>L inscription au Service necessite la creation d un compte avec une adresse email valide et un mot de passe. Le paiement est gere par Stripe, prestataire de paiement securise. TradeScope SA ne stocke aucune donnee bancaire.</p>
+            <p>L inscription au Service necessite la creation d un compte avec une adresse email valide et un mot de passe. Le paiement est gere par PayPal, prestataire de paiement securise. TradeScope ne stocke aucune donnee bancaire.</p>
             <p className="mt-2">L abonnement est a tacite reconduction mensuelle. Le prelevement est effectue automatiquement chaque mois a la date anniversaire de la souscription.</p>
           </section>
 
@@ -68,7 +68,7 @@ export default function CGVPage() {
 
           <section>
             <h2 className="font-display font-bold text-lg text-txt-1 mb-3">Article 7 - Resiliation</h2>
-            <p>L utilisateur peut resilier son abonnement a tout moment depuis son espace &quot;Mon Compte&quot; ou via le portail de gestion Stripe. La resiliation prend effet a la fin de la periode de facturation en cours. L utilisateur conserve l acces au Service jusqu a cette date.</p>
+            <p>L utilisateur peut resilier son abonnement a tout moment depuis son espace &quot;Mon Compte&quot;. La resiliation prend effet a la fin de la periode de facturation en cours. L utilisateur conserve l acces au Service jusqu a cette date.</p>
             <p className="mt-2">Aucun remboursement au prorata ne sera effectue pour la periode restante apres resiliation.</p>
           </section>
 

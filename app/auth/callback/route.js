@@ -11,8 +11,8 @@ export async function GET(request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     
     if (!error) {
-      // Rediriger vers Stripe Checkout
-      return NextResponse.redirect(`${origin}/api/stripe/checkout?plan=${plan}`);
+      // Rediriger vers la page compte pour choisir un plan
+      return NextResponse.redirect(`${origin}/account`);
     }
   }
 

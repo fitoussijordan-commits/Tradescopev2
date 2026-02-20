@@ -60,10 +60,11 @@ export default function AccountPage() {
     if (res.ok) loadData();
   };
 
-  const openPortal = async () => {
-    const res = await fetch('/api/stripe/portal', { method: 'POST' });
-    const { url } = await res.json();
-    if (url) window.location.href = url;
+  const cancelSubscription = async () => {
+    if (!confirm('Annuler ton abonnement ? Tu perdras l\'accès à la fin de la période en cours.')) return;
+    const res = await fetch('/api/paypal/cancel', { method: 'POST' });
+    if (res.ok) { alert('Abonnement annulé'); loadData(); }
+    else { const d = await res.json(); alert(d.error || 'Erreur'); }
   };
 
   const [editingId, setEditingId] = useState(null);
@@ -87,27 +88,92 @@ export default function AccountPage() {
   const cancelEdit = () => setEditingId(null);
 
   const [planLoading, setPlanLoading] = useState(null);
+  const [paypalPlans, setPaypalPlans] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [paypalReady, setPaypalReady] = useState(false);
 
-  const changePlan = async (plan) => {
-    setPlanLoading(plan);
+  // Load PayPal plans + SDK
+  const loadPayPalPlans = async () => {
+    if (paypalPlans) return;
     try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
-      });
+      const res = await fetch('/api/paypal/plans');
       const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert(data.error || 'Erreur Stripe. Verifie tes cles API dans Vercel.');
-        setPlanLoading(null);
-      }
+      setPaypalPlans(data);
     } catch (err) {
-      alert('Erreur de connexion a Stripe');
-      setPlanLoading(null);
+      console.error('Failed to load plans:', err);
     }
   };
+
+  // Load PayPal SDK
+  useEffect(() => {
+    if (!selectedPlan || !paypalPlans) return;
+    setPaypalReady(false);
+
+    // Remove old script
+    const old = document.getElementById('paypal-sdk');
+    if (old) old.remove();
+
+    // Remove old buttons
+    const container = document.getElementById('paypal-button-container');
+    if (container) container.innerHTML = '';
+
+    const script = document.createElement('script');
+    script.id = 'paypal-sdk';
+    script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&vault=true&intent=subscription&currency=EUR`;
+    script.addEventListener('load', () => {
+      setPaypalReady(true);
+    });
+    document.head.appendChild(script);
+
+    return () => {
+      const s = document.getElementById('paypal-sdk');
+      if (s) s.remove();
+    };
+  }, [selectedPlan, paypalPlans]);
+
+  // Render PayPal buttons
+  useEffect(() => {
+    if (!paypalReady || !selectedPlan || !paypalPlans || !window.paypal) return;
+
+    const container = document.getElementById('paypal-button-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const planId = paypalPlans[selectedPlan];
+    if (!planId) return;
+
+    window.paypal.Buttons({
+      style: { shape: 'rect', color: 'blue', layout: 'vertical', label: 'subscribe' },
+      createSubscription: function(data, actions) {
+        return actions.subscription.create({ plan_id: planId });
+      },
+      onApprove: async function(data) {
+        setPlanLoading(selectedPlan);
+        try {
+          const res = await fetch('/api/paypal/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscriptionId: data.subscriptionID, plan: selectedPlan }),
+          });
+          if (res.ok) {
+            window.location.href = '/dashboard?checkout=success';
+          } else {
+            const d = await res.json();
+            alert(d.error || 'Erreur lors de l\'activation');
+            setPlanLoading(null);
+          }
+        } catch (err) {
+          alert('Erreur de connexion');
+          setPlanLoading(null);
+        }
+      },
+      onError: function(err) {
+        console.error('PayPal error:', err);
+        alert('Erreur PayPal. Réessaie.');
+        setPlanLoading(null);
+      },
+    }).render('#paypal-button-container');
+  }, [paypalReady, selectedPlan, paypalPlans]);
 
   if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
 
@@ -132,8 +198,8 @@ export default function AccountPage() {
             </div>
           </div>
           {hasSubscription && (
-            <button onClick={openPortal} className="px-4 py-2 text-sm font-semibold border border-brd rounded-lg text-txt-2 hover:border-accent hover:text-accent transition-all">
-              Gérer l'abonnement
+            <button onClick={cancelSubscription} className="px-4 py-2 text-sm font-semibold border border-loss text-loss rounded-lg hover:bg-loss-dim transition-all">
+              Annuler l'abonnement
             </button>
           )}
         </div>
@@ -141,20 +207,30 @@ export default function AccountPage() {
         {!hasSubscription && (
           <div>
             <p className="text-txt-2 text-sm mb-4">Choisis un plan pour accéder à TradeScope :</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
               {[
                 { key: 'starter', name: 'Starter', price: '4,99€', desc: '1 compte' },
                 { key: 'pro', name: 'Pro', price: '9,99€', desc: '3 comptes', popular: true },
-                { key: 'unlimited', name: 'Unlimited', price: '19,99€', desc: 'Illimite' },
+                { key: 'unlimited', name: 'Unlimited', price: '19,99€', desc: 'Illimité' },
               ].map(p => (
-                <button key={p.key} onClick={() => changePlan(p.key)} disabled={planLoading !== null}
-                  className={`p-4 rounded-xl border text-left transition-all active:scale-95 ${planLoading === p.key ? 'opacity-60' : 'hover:-translate-y-0.5'} ${p.popular ? 'border-accent bg-accent-dim' : 'border-brd hover:border-brd-hover'}`}>
+                <button key={p.key} onClick={() => { setSelectedPlan(p.key); loadPayPalPlans(); }} disabled={planLoading !== null}
+                  className={`p-4 rounded-xl border text-left transition-all active:scale-95 ${planLoading === p.key ? 'opacity-60' : 'hover:-translate-y-0.5'} ${selectedPlan === p.key ? 'border-accent bg-accent-dim ring-2 ring-accent/30' : p.popular ? 'border-accent/40 bg-accent-dim/50' : 'border-brd hover:border-brd-hover'}`}>
                   <div className="font-display font-bold">{p.name}</div>
-                  <div className="text-xl font-bold font-display">{planLoading === p.key ? 'Redirection...' : p.price}<span className="text-txt-2 text-xs">{planLoading !== p.key ? '/mois' : ''}</span></div>
-                  <div className="text-txt-2 text-xs mt-1">{p.desc}</div>
+                  <div className="text-xl font-bold font-display">{p.price}<span className="text-txt-2 text-xs">/mois</span></div>
+                  <div className="text-txt-2 text-xs mt-1">{p.desc} · 7j essai gratuit</div>
+                  {selectedPlan === p.key && <div className="text-accent text-xs font-bold mt-2">✓ Sélectionné</div>}
                 </button>
               ))}
             </div>
+
+            {selectedPlan && (
+              <div className="border border-brd rounded-xl p-5 bg-bg-secondary">
+                <p className="text-sm text-txt-2 mb-3 text-center">Finalise ton abonnement avec PayPal :</p>
+                <div id="paypal-button-container" className="max-w-sm mx-auto min-h-[50px]">
+                  {!paypalReady && <div className="text-center text-txt-3 text-sm py-4">Chargement PayPal...</div>}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

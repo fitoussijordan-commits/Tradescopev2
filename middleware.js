@@ -38,7 +38,7 @@ export async function middleware(request) {
   }
 
   // API routes publiques
-  if (path.startsWith('/api/stripe/webhook')) {
+  if (path.startsWith('/api/paypal/webhook')) {
     return response;
   }
 
