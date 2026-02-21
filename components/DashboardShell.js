@@ -71,6 +71,33 @@ function MobileAccountSelector() {
   );
 }
 
+function IOSInstallBanner() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    // Show only on iOS Safari, not already in PWA, and not dismissed
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isStandalone = window.navigator.standalone === true;
+    const dismissed = localStorage.getItem('ts-pwa-dismissed');
+    if (isIOS && !isStandalone && !dismissed) setShow(true);
+  }, []);
+  const dismiss = () => { setShow(false); localStorage.setItem('ts-pwa-dismissed', '1'); };
+  if (!show) return null;
+  return (
+    <div className="fixed bottom-20 md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-bg-card border border-accent/30 rounded-xl p-4 shadow-2xl z-[300] animate-fade-up">
+      <button onClick={dismiss} className="absolute top-2 right-3 text-txt-3 text-lg">×</button>
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-accent to-purple-400 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0">TS</div>
+        <div>
+          <div className="font-bold text-sm mb-1">Installer TradeScope</div>
+          <div className="text-txt-2 text-xs leading-relaxed">
+            Tape <span className="inline-block mx-0.5">⬆</span> puis <strong>"Sur l'écran d'accueil"</strong> pour installer l'app
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ShellInner({ user, profile, children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -197,6 +224,7 @@ function ShellInner({ user, profile, children }) {
           {children}
         </div>
       </main>
+      <IOSInstallBanner />
     </div>
   );
 }
