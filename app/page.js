@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ContactForm from '@/components/ContactForm';
 
 const plans = [
   {
@@ -340,11 +341,22 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Contact */}
+      <section id="contact" className="py-20 px-6">
+        <div className="max-w-lg mx-auto">
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4 text-center">Une question ?</h2>
+          <p className="text-txt-2 mb-8 text-center">Envoie-nous un message, on repond rapidement.</p>
+          <ContactForm />
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-brd py-8 px-6 text-center text-txt-3 text-sm">
-        <p>&copy; {new Date().getFullYear()} TradeScope SA. Tous droits reserves.</p>
-        <div className="mt-2">
-          <a href="/cgv" className="text-txt-3 hover:text-accent transition-colors underline">Conditions Generales de Vente</a>
+        <p>&copy; {new Date().getFullYear()} TradeScope. Tous droits reserves.</p>
+        <div className="mt-2 flex items-center justify-center gap-4">
+          <a href="/cgv" className="text-txt-3 hover:text-accent transition-colors underline">CGV</a>
+          <span className="text-brd">·</span>
+          <a href="mailto:j.fitoussi@drhauschka.fr" className="text-txt-3 hover:text-accent transition-colors underline">Contact</a>
         </div>
       </footer>
     </div>
