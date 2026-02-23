@@ -356,7 +356,7 @@ export default function LandingPage() {
         <div className="mt-2 flex items-center justify-center gap-4">
           <a href="/cgv" className="text-txt-3 hover:text-accent transition-colors underline">CGV</a>
           <span className="text-brd">·</span>
-          <a href="mailto:j.fitoussi@drhauschka.fr" className="text-txt-3 hover:text-accent transition-colors underline">Contact</a>
+          <a href="mailto:support@tradescopev2.fr" className="text-txt-3 hover:text-accent transition-colors underline">Contact</a>
         </div>
       </footer>
     </div>

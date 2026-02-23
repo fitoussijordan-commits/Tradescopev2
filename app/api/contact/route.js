@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
-const SUPPORT_EMAIL = 'j.fitoussi@drhauschka.fr';
+const SUPPORT_EMAIL = 'support@tradescopev2.fr';
 
 export async function POST(request) {
   try {
