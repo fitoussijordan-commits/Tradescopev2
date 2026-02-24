@@ -39,7 +39,7 @@ export async function POST(request) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'TradeScope <noreply@tradescopev2.fr>',
+            from: 'TradeScope <onboarding@resend.dev>',
             to: SUPPORT_EMAIL,
             subject: `[TradeScope] Message de ${name}`,
             html: `
