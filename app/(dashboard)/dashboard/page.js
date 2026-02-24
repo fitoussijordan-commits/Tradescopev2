@@ -3,251 +3,337 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { useAccount } from '@/components/AccountContext';
 
-function PnLCalendar({ trades, month, year, onPrev, onNext }) {
-  const [selectedDay, setSelectedDay] = useState(null);
-
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDay = new Date(year, month, 1).getDay();
-  const startOffset = firstDay === 0 ? 6 : firstDay - 1;
-
-  const dayPnl = {};
-  const dayTrades = {};
-  trades.forEach(t => {
-    const d = new Date(t.date);
-    if (d.getMonth() === month && d.getFullYear() === year) {
-      const day = d.getDate();
-      dayPnl[day] = (dayPnl[day] || 0) + parseFloat(t.pnl);
-      if (!dayTrades[day]) dayTrades[day] = [];
-      dayTrades[day].push(t);
-    }
-  });
-
-  const monthNames = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
-  const cells = [];
-  for (let i = 0; i < startOffset; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-
-  const monthPnl = Object.values(dayPnl).reduce((s, v) => s + v, 0);
-  const tradingDays = Object.keys(dayPnl).length;
-  const greenDays = Object.values(dayPnl).filter(v => v > 0).length;
-  const redDays = Object.values(dayPnl).filter(v => v < 0).length;
-
-  const selectedTrades = selectedDay ? (dayTrades[selectedDay] || []) : [];
-
-  return (
-    <div>
-      <div className="bg-bg-card border border-brd rounded-xl p-4 md:p-6">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h3 className="font-display font-bold text-lg">Calendrier P&L</h3>
-            <div className="flex items-center gap-3 mt-1 text-xs text-txt-3 font-mono">
-              <span>{tradingDays} jour{tradingDays > 1 ? 's' : ''}</span>
-              <span className="text-profit">{greenDays} vert{greenDays > 1 ? 's' : ''}</span>
-              <span className="text-loss">{redDays} rouge{redDays > 1 ? 's' : ''}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => { onPrev(); setSelectedDay(null); }} className="w-8 h-8 rounded-lg border border-brd text-txt-2 hover:border-accent hover:text-accent transition-all text-sm flex items-center justify-center">◂</button>
-            <span className="text-sm font-display font-bold min-w-[140px] text-center">{monthNames[month]} {year}</span>
-            <button onClick={() => { onNext(); setSelectedDay(null); }} className="w-8 h-8 rounded-lg border border-brd text-txt-2 hover:border-accent hover:text-accent transition-all text-sm flex items-center justify-center">▸</button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-7 gap-1.5 mb-2">
-          {['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => (
-            <div key={d} className="text-center text-[0.6rem] text-txt-3 font-mono font-bold py-1.5">{d}</div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-1.5">
-          {cells.map((day, i) => {
-            if (day === null) return <div key={`e${i}`} />;
-            const pnl = dayPnl[day];
-            const hasData = pnl !== undefined;
-            const count = dayTrades[day]?.length || 0;
-            const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
-            const isSelected = day === selectedDay;
-
-            const bgStyle = hasData && pnl > 0
-              ? { backgroundColor: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.3)' }
-              : hasData && pnl < 0
-              ? { backgroundColor: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)' }
-              : hasData
-              ? { backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--brd)' }
-              : {};
-
-            return (
-              <button key={day} onClick={() => hasData ? setSelectedDay(isSelected ? null : day) : null}
-                style={bgStyle}
-                className={`relative rounded-xl p-1.5 min-h-[56px] md:min-h-[70px] flex flex-col items-center justify-center text-center transition-all
-                ${hasData ? 'cursor-pointer hover:scale-[1.03] active:scale-95' : 'cursor-default'}
-                ${!hasData ? 'bg-bg-secondary/30' : ''}
-                ${isToday ? 'ring-2 ring-accent ring-offset-1 ring-offset-bg-primary' : ''}
-                ${isSelected ? 'ring-2 ring-accent scale-[1.03] shadow-lg' : ''}
-              `}>
-                <span className={`text-xs font-mono ${hasData ? 'font-bold' : 'text-txt-3'}`}>{day}</span>
-                {hasData && (
-                  <>
-                    <span className={`text-[0.65rem] md:text-xs font-mono font-bold mt-0.5 ${pnl > 0 ? 'text-profit' : pnl < 0 ? 'text-loss' : 'text-txt-3'}`}>
-                      {pnl > 0 ? '+' : ''}{Math.abs(pnl) >= 1000 ? `${(pnl/1000).toFixed(1)}k` : pnl.toFixed(0)}€
-                    </span>
-                    <span className="text-[0.45rem] text-txt-3 font-mono mt-0.5">{count} trade{count > 1 ? 's' : ''}</span>
-                  </>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-brd">
-          <span className="text-txt-3 text-xs font-mono">Total du mois</span>
-          <span className={`font-mono font-bold text-lg ${monthPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
-            {monthPnl >= 0 ? '+' : ''}{monthPnl.toFixed(2)}€
-          </span>
-        </div>
-      </div>
-
-      {/* Day detail MODAL */}
-      {selectedDay && selectedTrades.length > 0 && (
-        <>
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200]" onClick={() => setSelectedDay(null)} />
-          <div className="fixed inset-0 z-[201] flex items-center justify-center p-4" onClick={() => setSelectedDay(null)}>
-            <div className="bg-bg-card border border-brd rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
-              <div className="p-5 border-b border-brd flex justify-between items-center">
-                <div>
-                  <h3 className="font-display font-bold text-base">
-                    Trades — {new Date(year, month, selectedDay).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                  </h3>
-                </div>
-                <button onClick={() => setSelectedDay(null)} className="w-8 h-8 rounded-lg border border-brd text-txt-3 hover:text-txt-1 hover:border-accent transition-all text-sm flex items-center justify-center">✕</button>
-              </div>
-
-              <div className="p-5">
-                {/* Summary */}
-                <div className="grid grid-cols-3 gap-3 mb-5">
-                  <div className="bg-bg-secondary border border-brd rounded-xl p-3">
-                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">P&L</div>
-                    <div className={`text-xl font-bold font-display ${dayPnl[selectedDay] >= 0 ? 'text-profit' : 'text-loss'}`}>
-                      {dayPnl[selectedDay] >= 0 ? '+' : ''}{dayPnl[selectedDay].toFixed(2)} €
-                    </div>
-                  </div>
-                  <div className="bg-bg-secondary border border-brd rounded-xl p-3">
-                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">Trades</div>
-                    <div className="text-xl font-bold font-display">{selectedTrades.length}</div>
-                  </div>
-                  <div className="bg-bg-secondary border border-brd rounded-xl p-3">
-                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">W / L</div>
-                    <div className="text-xl font-bold font-display">
-                      <span className="text-profit">{selectedTrades.filter(t => parseFloat(t.pnl) > 0).length}</span>
-                      <span className="text-txt-3">/</span>
-                      <span className="text-loss">{selectedTrades.filter(t => parseFloat(t.pnl) < 0).length}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Trade list */}
-                <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-                  {selectedTrades.map(t => (
-                    <div key={t.id} className="bg-bg-secondary border border-brd rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="font-bold text-sm">{t.instrument || '-'}</span>
-                        <span className={`text-[0.55rem] font-bold font-mono px-1.5 py-0.5 rounded ${t.type === 'LONG' ? 'bg-profit/15 text-profit' : 'bg-loss/15 text-loss'}`}>{t.type}</span>
-                        {t.size && <span className="text-[0.6rem] text-txt-3 font-mono">{t.size} lots</span>}
-                      </div>
-                      <span className={`font-bold font-mono text-sm flex-shrink-0 ${parseFloat(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>
-                        {parseFloat(t.pnl) >= 0 ? '+' : ''}{parseFloat(t.pnl).toFixed(2)}€
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 export default function DashboardPage() {
   const { currentAccount, currentAccountId } = useAccount();
+  const [stats, setStats] = useState(null);
   const [trades, setTrades] = useState([]);
+  const [strategies, setStrategies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [calMonth, setCalMonth] = useState(new Date().getMonth());
-  const [calYear, setCalYear] = useState(new Date().getFullYear());
 
-  useEffect(() => { loadData(); }, [currentAccountId]);
+  useEffect(() => {
+    if (currentAccountId) loadData();
+  }, [currentAccountId]);
 
   const loadData = async () => {
-    if (!currentAccountId) return;
-    setLoading(true);
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data: t } = await supabase.from('trades').select('*').eq('user_id', user.id).eq('is_payout', false).order('date', { ascending: false });
-    setTrades(t || []);
-    setLoading(false);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Load trades with strategy information
+      const { data: tradesData } = await supabase
+        .from('trades')
+        .select(`
+          *, 
+          strategies(name, color)
+        `)
+        .eq('account_id', currentAccountId)
+        .order('date', { ascending: false });
+
+      // Load strategies
+      const { data: strategiesData } = await supabase
+        .from('strategies')
+        .select('*')
+        .eq('user_id', user.id);
+
+      setTrades(tradesData || []);
+      setStrategies(strategiesData || []);
+      calculateStats(tradesData || []);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const prevMonth = () => {
-    if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); }
-    else setCalMonth(calMonth - 1);
-  };
-  const nextMonth = () => {
-    if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); }
-    else setCalMonth(calMonth + 1);
-  };
+  const calculateStats = (tradesData) => {
+    const realTrades = tradesData.filter(t => !t.is_payout);
+    const payouts = tradesData.filter(t => t.is_payout);
+    
+    if (realTrades.length === 0) {
+      setStats(null);
+      return;
+    }
 
-  if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
+    const wins = realTrades.filter(t => t.pnl > 0);
+    const losses = realTrades.filter(t => t.pnl < 0);
+    const breakevens = realTrades.filter(t => t.pnl === 0);
+    
+    const totalPnl = realTrades.reduce((sum, t) => sum + t.pnl, 0);
+    const totalWins = wins.reduce((sum, t) => sum + t.pnl, 0);
+    const totalLosses = Math.abs(losses.reduce((sum, t) => sum + t.pnl, 0));
+    const totalPayouts = payouts.reduce((sum, t) => sum + Math.abs(t.pnl), 0);
+    
+    const winRate = (wins.length / realTrades.length) * 100;
+    const avgWin = wins.length > 0 ? totalWins / wins.length : 0;
+    const avgLoss = losses.length > 0 ? totalLosses / losses.length : 0;
+    const profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 999 : 0;
+    const expectancy = realTrades.length > 0 ? totalPnl / realTrades.length : 0;
+    
+    // Max drawdown calculation
+    let maxDrawdown = 0;
+    let runningPnl = 0;
+    let peak = 0;
+    
+    [...realTrades].reverse().forEach(trade => {
+      runningPnl += trade.pnl;
+      if (runningPnl > peak) peak = runningPnl;
+      const drawdown = peak - runningPnl;
+      if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+    });
+
+    // Sharpe ratio approximation (simplified)
+    const returns = realTrades.map(t => t.pnl_percent || 0);
+    const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+    const volatility = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length);
+    const sharpeRatio = volatility > 0 ? avgReturn / volatility : 0;
+
+    // Strategy performance
+    const strategyStats = {};
+    realTrades.forEach(trade => {
+      const strategyName = trade.strategies?.name || 'Sans stratégie';
+      if (!strategyStats[strategyName]) {
+        strategyStats[strategyName] = { trades: 0, pnl: 0, wins: 0, color: trade.strategies?.color || '#6B7280' };
+      }
+      strategyStats[strategyName].trades++;
+      strategyStats[strategyName].pnl += trade.pnl;
+      if (trade.pnl > 0) strategyStats[strategyName].wins++;
+    });
+
+    // Error analysis
+    const errorStats = {};
+    realTrades.forEach(trade => {
+      if (trade.error_tags && trade.pnl < 0) {
+        trade.error_tags.forEach(error => {
+          errorStats[error] = (errorStats[error] || 0) + 1;
+        });
+      }
+    });
+
+    // Confidence analysis
+    const confidenceStats = {};
+    realTrades.forEach(trade => {
+      if (trade.confidence) {
+        if (!confidenceStats[trade.confidence]) {
+          confidenceStats[trade.confidence] = { trades: 0, pnl: 0, wins: 0 };
+        }
+        confidenceStats[trade.confidence].trades++;
+        confidenceStats[trade.confidence].pnl += trade.pnl;
+        if (trade.pnl > 0) confidenceStats[trade.confidence].wins++;
+      }
+    });
+
+    setStats({
+      totalTrades: realTrades.length,
+      totalPnl,
+      totalPayouts,
+      winRate,
+      avgWin,
+      avgLoss,
+      profitFactor,
+      expectancy,
+      maxDrawdown,
+      sharpeRatio,
+      wins: wins.length,
+      losses: losses.length,
+      breakevens: breakevens.length,
+      strategyStats,
+      errorStats,
+      confidenceStats,
+    });
+  };
 
   if (!currentAccount) {
+    return <div className="text-center py-20"><p className="text-txt-2">Sélectionne un compte pour voir le dashboard</p></div>;
+  }
+
+  if (loading) {
+    return <div className="text-center py-20"><div className="text-txt-3">Chargement...</div></div>;
+  }
+
+  if (!stats) {
     return (
-      <div className="text-center py-20">
-        <div className="text-4xl mb-4 opacity-40">◈</div>
-        <h2 className="font-display text-xl font-bold mb-2">Bienvenue sur TradeScope !</h2>
-        <p className="text-txt-2 mb-6">Cree ton premier compte de trading pour commencer.</p>
-        <a href="/account" className="inline-flex px-6 py-3 bg-accent text-white font-bold rounded-lg hover:opacity-90 transition-all shadow-lg shadow-accent-glow">Creer un compte</a>
+      <div className="text-center py-20 space-y-4">
+        <div className="text-6xl opacity-50">📊</div>
+        <div><p className="text-lg font-semibold">Aucun trade trouvé</p><p className="text-txt-2 text-sm">Commence à enregistrer tes trades pour voir tes stats</p></div>
       </div>
     );
   }
 
-  const at = trades.filter(t => t.account_id === currentAccountId);
-  const totalPnl = at.reduce((s, t) => s + parseFloat(t.pnl), 0);
-  const capital = parseFloat(currentAccount.base_capital) + totalPnl;
-  const wins = at.filter(t => t.pnl > 0).length;
-  const losses = at.filter(t => t.pnl < 0).length;
-  const winRate = at.length > 0 ? ((wins / at.length) * 100).toFixed(1) : 0;
-  const capitalChange = ((capital - currentAccount.base_capital) / currentAccount.base_capital * 100).toFixed(2);
-
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthlyTrades = at.filter(t => new Date(t.date) >= monthStart);
-  const monthlyPnl = monthlyTrades.reduce((s, t) => s + parseFloat(t.pnl), 0);
-
-  const rrTrades = at.filter(t => t.rr != null);
-  const avgRR = rrTrades.length > 0 ? (rrTrades.reduce((s, t) => s + parseFloat(t.rr), 0) / rrTrades.length).toFixed(2) : null;
-
-  const fmt = (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
-
   return (
-    <div className="animate-fade-up">
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
-        {[
-          { label: 'Capital Actuel', value: fmt(capital), sub: `${capitalChange >= 0 ? '▲' : '▼'} ${capitalChange >= 0 ? '+' : ''}${capitalChange}%`, color: capitalChange >= 0 ? 'text-profit' : 'text-loss' },
-          { label: 'P&L Total', value: fmt(totalPnl), sub: `${at.length} trades`, color: totalPnl >= 0 ? 'text-profit' : 'text-loss' },
-          { label: 'Win Rate', value: `${winRate}%`, sub: `${wins}W / ${losses}L`, color: winRate >= 50 ? 'text-profit' : 'text-loss' },
-          { label: 'P&L Mensuel', value: fmt(monthlyPnl), sub: `${monthlyTrades.length} trades`, color: monthlyPnl >= 0 ? 'text-profit' : 'text-loss' },
-          { label: 'R:R Moyen', value: avgRR ? `${avgRR}R` : '—', sub: rrTrades.length > 0 ? `${rrTrades.length} trades` : 'Aucun risque', color: avgRR && avgRR >= 0 ? 'text-profit' : avgRR ? 'text-loss' : 'text-txt-3' },
-        ].map((m) => (
-          <div key={m.label} className="relative bg-bg-card border border-brd rounded-xl p-4 transition-all hover:border-brd-hover overflow-hidden metric-glow">
-            <div className="text-[0.62rem] text-txt-3 uppercase tracking-[1.2px] font-semibold font-mono mb-2">{m.label}</div>
-            <div className={`text-lg md:text-xl font-bold font-display tracking-tight leading-tight mb-0.5 ${m.color}`}>{m.value}</div>
-            <div className="text-[0.72rem] text-txt-2 font-medium">{m.sub}</div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Dashboard PREVIEW - {currentAccount?.name}</h1>
+          <p className="text-txt-2 text-sm">{currentAccount?.prop_firm}</p>
+        </div>
+        <div className="text-right">
+          <div className={`text-2xl font-bold font-display ${stats.totalPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+            {stats.totalPnl >= 0 ? '+' : ''}{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(stats.totalPnl)}
           </div>
-        ))}
+          <div className="text-txt-2 text-sm">{stats.totalTrades} trades • {stats.totalPayouts > 0 ? `${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(stats.totalPayouts)} payouts` : 'Aucun payout'}</div>
+        </div>
       </div>
 
-      <PnLCalendar trades={at} month={calMonth} year={calYear} onPrev={prevMonth} onNext={nextMonth} />
+      {/* Preview Badge */}
+      <div className="bg-accent-dim border border-accent/30 rounded-xl p-4 text-center">
+        <div className="text-accent font-bold text-sm">🚀 TradeScope PREVIEW v36</div>
+        <div className="text-xs text-txt-2 mt-1">Stratégies multi-niveaux • Analytics visuels • Tags d'erreurs • Confidence tracking</div>
+      </div>
+
+      {/* Key Metrics Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-bg-card border border-brd rounded-xl p-4">
+          <div className="text-txt-2 text-xs font-mono uppercase tracking-wide mb-1">Win Rate</div>
+          <div className="text-2xl font-bold font-display">{stats.winRate.toFixed(1)}%</div>
+        </div>
+        <div className="bg-bg-card border border-brd rounded-xl p-4">
+          <div className="text-txt-2 text-xs font-mono uppercase tracking-wide mb-1">Profit Factor</div>
+          <div className="text-2xl font-bold font-display">{stats.profitFactor === 999 ? '∞' : stats.profitFactor.toFixed(2)}</div>
+        </div>
+        <div className="bg-bg-card border border-brd rounded-xl p-4">
+          <div className="text-txt-2 text-xs font-mono uppercase tracking-wide mb-1">Expectancy</div>
+          <div className={`text-2xl font-bold font-display ${stats.expectancy >= 0 ? 'text-profit' : 'text-loss'}`}>
+            {stats.expectancy >= 0 ? '+' : ''}{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(stats.expectancy)}
+          </div>
+        </div>
+        <div className="bg-bg-card border border-brd rounded-xl p-4">
+          <div className="text-txt-2 text-xs font-mono uppercase tracking-wide mb-1">Max Drawdown</div>
+          <div className="text-2xl font-bold font-display text-loss">
+            -{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(stats.maxDrawdown)}
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-bg-card border border-brd rounded-xl p-6">
+          <h3 className="font-bold mb-4">Distribution des Trades</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-profit rounded-full"></div>
+                <span>Gains</span>
+              </div>
+              <span className="font-bold">{stats.wins}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-loss rounded-full"></div>
+                <span>Pertes</span>
+              </div>
+              <span className="font-bold">{stats.losses}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-txt-3 rounded-full"></div>
+                <span>BE</span>
+              </div>
+              <span className="font-bold">{stats.breakevens}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-bg-card border border-brd rounded-xl p-6">
+          <h3 className="font-bold mb-4">P&L par Stratégie</h3>
+          <div className="space-y-3">
+            {Object.entries(stats.strategyStats).map(([name, stat]) => (
+              <div key={name} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stat.color }}></div>
+                  <span className="text-sm">{name}</span>
+                </div>
+                <div className="text-right">
+                  <div className={`font-bold text-sm ${stat.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                    {stat.pnl >= 0 ? '+' : ''}{stat.pnl.toFixed(0)}€
+                  </div>
+                  <div className="text-xs text-txt-3">
+                    {stat.trades}T • {((stat.wins / stat.trades) * 100).toFixed(0)}%
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-bg-card border border-brd rounded-xl p-6">
+          <h3 className="font-bold mb-4">Erreurs Fréquentes</h3>
+          <div className="space-y-2">
+            {Object.entries(stats.errorStats)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 5)
+              .map(([error, count]) => (
+                <div key={error} className="flex justify-between items-center">
+                  <span className="text-sm">{error}</span>
+                  <span className="bg-loss-dim text-loss px-2 py-1 rounded text-xs font-bold">{count}×</span>
+                </div>
+              ))
+            }
+            {Object.keys(stats.errorStats).length === 0 && (
+              <div className="text-center text-txt-3 py-4">
+                <div className="text-xl mb-1">🎯</div>
+                <div className="text-xs">Aucune erreur identifiée</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Confidence Analysis */}
+      {Object.keys(stats.confidenceStats).length > 0 && (
+        <div className="bg-bg-card border border-brd rounded-xl p-6">
+          <h3 className="font-bold mb-4">Performance par Niveau de Confiance</h3>
+          <div className="grid grid-cols-5 gap-4">
+            {[1,2,3,4,5].map(conf => {
+              const stat = stats.confidenceStats[conf];
+              if (!stat) return (
+                <div key={conf} className="text-center p-4 bg-bg-secondary rounded-lg">
+                  <div className="text-lg font-bold text-txt-3">Conf {conf}</div>
+                  <div className="text-xs text-txt-3 mt-1">Aucune donnée</div>
+                </div>
+              );
+              const avgPnl = stat.pnl / stat.trades;
+              const wr = (stat.wins / stat.trades) * 100;
+              return (
+                <div key={conf} className="text-center p-4 bg-bg-secondary rounded-lg">
+                  <div className="text-lg font-bold">Conf {conf}</div>
+                  <div className={`text-sm font-bold ${avgPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                    {avgPnl >= 0 ? '+' : ''}{avgPnl.toFixed(0)}€
+                  </div>
+                  <div className="text-xs text-txt-3 mt-1">
+                    {stat.trades}T • {wr.toFixed(0)}% WR
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Additional Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-bg-card border border-brd rounded-xl p-4 text-center">
+          <div className="text-txt-2 text-xs font-mono uppercase tracking-wide mb-1">Gain Moyen</div>
+          <div className="text-lg font-bold font-display text-profit">
+            +{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(stats.avgWin)}
+          </div>
+        </div>
+        <div className="bg-bg-card border border-brd rounded-xl p-4 text-center">
+          <div className="text-txt-2 text-xs font-mono uppercase tracking-wide mb-1">Perte Moyenne</div>
+          <div className="text-lg font-bold font-display text-loss">
+            -{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(stats.avgLoss)}
+          </div>
+        </div>
+        <div className="bg-bg-card border border-brd rounded-xl p-4 text-center">
+          <div className="text-txt-2 text-xs font-mono uppercase tracking-wide mb-1">Sharpe Ratio</div>
+          <div className="text-lg font-bold font-display">{stats.sharpeRatio.toFixed(2)}</div>
+        </div>
+        <div className="bg-bg-card border border-brd rounded-xl p-4 text-center">
+          <div className="text-txt-2 text-xs font-mono uppercase tracking-wide mb-1">Total Trades</div>
+          <div className="text-lg font-bold font-display">{stats.totalTrades}</div>
+        </div>
+      </div>
     </div>
   );
 }

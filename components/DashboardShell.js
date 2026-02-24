@@ -14,6 +14,7 @@ const menuItems = [
     { path: '/global-stats', icon: '◎', name: 'Stats Globales', requiredPlan: ['pro', 'unlimited'] },
   ]},
   { label: 'Outils', items: [
+    { path: '/strategies', icon: '⚡', name: 'Stratégies' },
     { path: '/playbook', icon: '▦', name: 'Playbook', requiredPlan: ['pro', 'unlimited'] },
     { path: '/export', icon: '↓', name: 'Export Excel', requiredPlan: ['unlimited'] },
     { path: '/account', icon: '◉', name: 'Mon Compte' },

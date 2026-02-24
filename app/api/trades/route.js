@@ -51,6 +51,9 @@ export async function POST(request) {
     notes: body.notes || null,
     is_payout: body.is_payout || false,
     session: body.session || null,
+    strategy_id: body.strategy_id || null,
+    error_tags: body.error_tags || null,
+    confidence: body.confidence || null,
   }).select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
