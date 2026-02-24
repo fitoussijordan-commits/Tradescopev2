@@ -1,4 +1,4 @@
-Import './globals.css';
+import './globals.css';
 
 export const metadata = {
   title: 'TradeScope PREVIEW v36 - Journal de Trading Pro',
