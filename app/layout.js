@@ -1,13 +1,13 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'TradeScope PREVIEW v36 - Journal de Trading Pro',
-  description: 'Version preview avec stratégies, analytics visuels, et système de confiance - Journal de trading intelligent pour traders sérieux.',
+  title: 'TradeScope - Journal de Trading Pro',
+  description: 'Le journal de trading intelligent pour les traders sérieux. Suivez vos performances, analysez vos stats et améliorez votre trading.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'TradeScope PREVIEW',
+    title: 'TradeScope',
   },
 };
 

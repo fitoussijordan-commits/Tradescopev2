@@ -10,8 +10,7 @@ export default function TradesPage() {
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState('all');
   const [deleting, setDeleting] = useState(null);
-  const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '', strategy_id: '', error_tags: [], confidence: 3 });
-  const [strategies, setStrategies] = useState([]);
+  const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '' });
 
   // Calculate current capital for balance mode
   const currentCapital = (() => {
@@ -22,17 +21,7 @@ export default function TradesPage() {
 
   const computedPnl = form.balanceMode && form.balance !== '' ? (parseFloat(form.balance) - currentCapital) : null;
 
-  useEffect(() => { loadData(); loadStrategies(); }, [currentAccountId]);
-
-  const loadStrategies = async () => {
-    try {
-      const res = await fetch('/api/strategies');
-      const data = await res.json();
-      setStrategies(data);
-    } catch (error) {
-      console.error('Error loading strategies:', error);
-    }
-  };
+  useEffect(() => { loadData(); }, [currentAccountId]);
 
   const loadData = async () => {
     const supabase = createClient();
@@ -57,26 +46,9 @@ export default function TradesPage() {
     const pnlPercent = (pnl / currentCapital) * 100;
     const res = await fetch('/api/trades', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        account_id: currentAccountId, 
-        date: form.date, 
-        instrument: form.is_payout ? null : form.instrument, 
-        type: form.is_payout ? null : form.type, 
-        pnl: form.is_payout && pnl > 0 ? -pnl : pnl, 
-        risk, 
-        pnl_percent: pnlPercent, 
-        size: parseFloat(form.size) || null, 
-        trading_view_link: form.trading_view_link || null, 
-        followed_strategy: form.followed_strategy, 
-        notes: form.notes || null, 
-        is_payout: form.is_payout, 
-        session: form.session || null,
-        strategy_id: form.strategy_id || null,
-        error_tags: form.error_tags.length > 0 ? form.error_tags : null,
-        confidence: !form.is_payout && pnl !== 0 ? form.confidence : null
-      }),
+      body: JSON.stringify({ account_id: currentAccountId, date: form.date, instrument: form.is_payout ? null : form.instrument, type: form.is_payout ? null : form.type, pnl: form.is_payout && pnl > 0 ? -pnl : pnl, risk, pnl_percent: pnlPercent, size: parseFloat(form.size) || null, trading_view_link: form.trading_view_link || null, followed_strategy: form.followed_strategy, notes: form.notes || null, is_payout: form.is_payout, session: form.session || null }),
     });
-    if (res.ok) { setShowModal(false); setForm({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '', strategy_id: '', error_tags: [], confidence: 3 }); loadData(); }
+    if (res.ok) { setShowModal(false); setForm({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '' }); loadData(); }
     else { const err = await res.json(); alert(err.error); }
   };
 
@@ -212,61 +184,6 @@ export default function TradesPage() {
                   </div>
                 </div>
               </>)}
-              
-              {/* Strategy Selection */}
-              {!form.is_payout && (
-                <div>
-                  <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Stratégie</label>
-                  <select value={form.strategy_id} onChange={e => setForm({...form, strategy_id: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">
-                    <option value="">Aucune stratégie</option>
-                    {strategies.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </div>
-              )}
-
-              {/* Confidence Level */}
-              {!form.is_payout && (
-                <div>
-                  <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Confiance (1-5)</label>
-                  <div className="flex gap-2">
-                    {[1,2,3,4,5].map(level => (
-                      <button key={level} type="button" onClick={() => setForm({...form, confidence: level})}
-                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${form.confidence === level ? 'bg-accent text-white' : 'bg-bg-secondary border border-brd text-txt-2 hover:border-accent'}`}>
-                        {level}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-1 text-[0.6rem] text-txt-3 font-mono">
-                    1=Très faible • 3=Modérée • 5=Très forte
-                  </div>
-                </div>
-              )}
-
-              {/* Error Tags (only show if P&L is negative) */}
-              {!form.is_payout && ((form.balanceMode && computedPnl < 0) || (!form.balanceMode && parseFloat(form.pnl) < 0)) && (
-                <div>
-                  <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Erreurs commises</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {['FOMO', 'Pas de stop', 'Contre-tendance', 'Overtrade', 'Trop gros size', 'Setup non validé'].map(tag => (
-                      <button key={tag} type="button" 
-                        onClick={() => {
-                          const newTags = form.error_tags.includes(tag) 
-                            ? form.error_tags.filter(t => t !== tag)
-                            : [...form.error_tags, tag];
-                          setForm({...form, error_tags: newTags});
-                        }}
-                        className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                          form.error_tags.includes(tag) 
-                            ? 'bg-loss text-white' 
-                            : 'bg-bg-secondary border border-brd text-txt-2 hover:border-loss'
-                        }`}>
-                        {tag}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
               <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Notes</label><textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows="2" placeholder="Notes..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent resize-none" /></div>
               <div className="flex gap-3 pt-2">
                 <button type="submit" className="flex-1 bg-accent text-white font-bold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all">Ajouter</button>

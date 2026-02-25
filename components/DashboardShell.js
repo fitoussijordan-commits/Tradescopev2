@@ -15,7 +15,6 @@ const menuItems = [
   ]},
   { label: 'Outils', items: [
     { path: '/playbook', icon: '▦', name: 'Playbook', requiredPlan: ['pro', 'unlimited'] },
-    { path: '/import', icon: '↥', name: 'Import Tradovate' },
     { path: '/export', icon: '↓', name: 'Export Excel', requiredPlan: ['unlimited'] },
     { path: '/account', icon: '◉', name: 'Mon Compte' },
   ]},
