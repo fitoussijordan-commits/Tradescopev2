@@ -24,21 +24,9 @@ export async function POST(request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
 
-// Vérifier la limite du plan (trialing = accès au plan choisi)
-const { data: profile } = await supabase
-  .from('profiles')
-  .select('plan, subscription_status, trial_expires_at')
-  .eq('id', user.id)
-  .single();
-
-const isTrialing = profile?.subscription_status === 'trialing' &&
-                   profile?.trial_expires_at &&
-                   new Date(profile.trial_expires_at) > new Date();
-
-const effectivePlan = (isTrialing || profile?.subscription_status === 'active') 
-  ? profile?.plan 
-  : 'none';
-const maxAccounts = getMaxAccounts(effectivePlan);
+  // Vérifier la limite du plan
+  const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single();
+  const maxAccounts = getMaxAccounts(profile?.plan);
 
   const { count } = await supabase
     .from('trading_accounts')

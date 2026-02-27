@@ -4,9 +4,6 @@ export const metadata = {
   title: 'TradeScope - Journal de Trading Pro',
   description: 'Le journal de trading intelligent pour les traders sérieux. Suivez vos performances, analysez vos stats et améliorez votre trading.',
   manifest: '/manifest.json',
-  alternates: {
-    canonical: 'https://www.tradescopev2.fr',
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
