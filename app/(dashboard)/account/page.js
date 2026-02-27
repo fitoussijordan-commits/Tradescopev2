@@ -208,6 +208,35 @@ export default function AccountPage() {
           )}
         </div>
 
+        {profile?.subscription_status === 'trialing' && (
+          <div>
+            <p className="text-txt-2 text-sm mb-4">Choisis ton plan avant la fin de ton essai :</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              {[
+                { key: 'starter', name: 'Starter', price: '4,99€', desc: '1 compte' },
+                { key: 'pro', name: 'Pro', price: '9,99€', desc: '3 comptes', popular: true },
+                { key: 'unlimited', name: 'Unlimited', price: '19,99€', desc: 'Illimité' },
+              ].map(p => (
+                <button key={p.key} onClick={() => { setSelectedPlan(p.key); loadPayPalPlans(); }} disabled={planLoading !== null}
+                  className={`p-4 rounded-xl border text-left transition-all active:scale-95 ${planLoading === p.key ? 'opacity-60' : 'hover:-translate-y-0.5'} ${selectedPlan === p.key ? 'border-accent bg-accent-dim ring-2 ring-accent/30' : p.popular ? 'border-accent/40 bg-accent-dim/50' : 'border-brd hover:border-brd-hover'}`}>
+                  <div className="font-display font-bold">{p.name}</div>
+                  <div className="text-xl font-bold font-display">{p.price}<span className="text-txt-2 text-xs">/mois</span></div>
+                  <div className="text-txt-2 text-xs mt-1">{p.desc}</div>
+                  {selectedPlan === p.key && <div className="text-accent text-xs font-bold mt-2">✓ Sélectionné</div>}
+                </button>
+              ))}
+            </div>
+            {selectedPlan && (
+              <div className="border border-brd rounded-xl p-5 bg-bg-secondary">
+                <p className="text-sm text-txt-2 mb-3 text-center">Finalise ton abonnement avec PayPal :</p>
+                <div id="paypal-button-container" className="max-w-sm mx-auto min-h-[50px]">
+                  {!paypalReady && <div className="text-center text-txt-3 text-sm py-4">Chargement PayPal...</div>}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {!hasSubscription && (
           <div>
             <p className="text-txt-2 text-sm mb-4">Choisis un plan pour accéder à TradeScope :</p>
