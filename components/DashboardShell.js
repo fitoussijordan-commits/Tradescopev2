@@ -173,7 +173,11 @@ function ShellInner({ user, profile, children }) {
             <div key={section.label} className="mb-5">
               <div className="text-[0.62rem] text-txt-3 uppercase tracking-[1.5px] font-semibold font-mono px-3 mb-1.5">{section.label}</div>
               {section.items.map((item) => {
-                const locked = item.requiredPlan && !item.requiredPlan.includes(profile?.plan);
+                const isTrialing = profile?.subscription_status === 'trialing' &&
+                                   profile?.trial_ends_at &&
+                                   new Date(profile.trial_ends_at) > new Date();
+                const effectivePlan = (isTrialing || profile?.subscription_status === 'active') ? profile?.plan : 'none';
+                const locked = item.requiredPlan && !item.requiredPlan.includes(effectivePlan);
                 const active = pathname === item.path;
                 return (
                   <Link key={item.path} href={locked ? '/account' : item.path} onClick={() => setMobileOpen(false)}
