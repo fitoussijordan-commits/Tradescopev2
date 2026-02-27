@@ -53,14 +53,14 @@ export async function middleware(request) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('plan, subscription_status, trial_expires_at')
+      .select('plan, subscription_status, trial_ends_at')
       .eq('id', user.id)
       .single();
 
     const isActive = profile?.subscription_status === 'active';
     const isTrialing = profile?.subscription_status === 'trialing' &&
-                       profile?.trial_expires_at &&
-                       new Date(profile.trial_expires_at) > new Date();
+                       profile?.trial_ends_at &&
+                       new Date(profile.trial_ends_at) > new Date();
 
     if (!isActive && !isTrialing) {
       return NextResponse.redirect(new URL('/account?expired=true', request.url));
