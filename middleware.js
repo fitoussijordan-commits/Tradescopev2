@@ -28,9 +28,8 @@ export async function middleware(request) {
   const path = request.nextUrl.pathname;
 
   // Pages publiques
-  const publicPaths = ['/', '/auth/login', '/auth/register', '/auth/callback'];
+  const publicPaths = ['/', '/auth/login', '/auth/register', '/auth/callback', '/cgv'];
   if (publicPaths.includes(path)) {
-    // Si connecté et va sur login/register, rediriger vers dashboard
     if (user && (path === '/auth/login' || path === '/auth/register')) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
@@ -38,7 +37,7 @@ export async function middleware(request) {
   }
 
   // API routes publiques
-  if (path.startsWith('/api/paypal/webhook')) {
+  if (path.startsWith('/api/paypal/webhook') || path.startsWith('/api/cron') || path.startsWith('/api/emails')) {
     return response;
   }
 
@@ -48,21 +47,23 @@ export async function middleware(request) {
   }
 
   // Vérifier l'abonnement pour les routes dashboard
-  if (path.startsWith('/dashboard') || path.startsWith('/trades') || 
+  if (path.startsWith('/dashboard') || path.startsWith('/trades') ||
       path.startsWith('/payouts') || path.startsWith('/statistics') ||
       path.startsWith('/global-stats') || path.startsWith('/playbook')) {
-    
+
     const { data: profile } = await supabase
       .from('profiles')
-      .select('plan, subscription_status')
+      .select('plan, subscription_status, trial_expires_at')
       .eq('id', user.id)
       .single();
 
-    const hasAccess = profile?.subscription_status === 'active' || 
-                      profile?.subscription_status === 'trialing';
+    const isActive = profile?.subscription_status === 'active';
+    const isTrialing = profile?.subscription_status === 'trialing' &&
+                       profile?.trial_expires_at &&
+                       new Date(profile.trial_expires_at) > new Date();
 
-    if (!hasAccess) {
-      return NextResponse.redirect(new URL('/account', request.url));
+    if (!isActive && !isTrialing) {
+      return NextResponse.redirect(new URL('/account?expired=true', request.url));
     }
   }
 

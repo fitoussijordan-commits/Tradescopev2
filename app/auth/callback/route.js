@@ -11,7 +11,7 @@ export async function GET(request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
-      // Set le trial à 7 jours à partir de maintenant
+      // Set le trial à 7 jours
       const trialExpiresAt = new Date();
       trialExpiresAt.setDate(trialExpiresAt.getDate() + 7);
 
@@ -19,11 +19,12 @@ export async function GET(request) {
         .from('profiles')
         .update({
           trial_expires_at: trialExpiresAt.toISOString(),
-          plan: plan, // garde le plan choisi pour après le trial
+          subscription_status: 'trialing',
+          plan: plan,
         })
         .eq('id', data.user.id);
 
-      // Envoyer l'email de bienvenue
+      // Email de bienvenue
       await fetch(`${origin}/api/emails/welcome`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
