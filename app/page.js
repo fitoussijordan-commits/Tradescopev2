@@ -3,20 +3,20 @@ import ContactForm from '@/components/ContactForm';
 
 const plans = [
   {
-    name: 'Starter', price: '4,99', period: '/mois', description: 'Parfait pour debuter',
-    features: ['1 compte de trading', 'Trades illimites', 'Statistiques du compte', 'Calendrier P&L', 'Calcul R:R automatique'],
-    notIncluded: ['Stats globales', 'Playbook', 'Export donnees'],
+    name: 'Starter', price: '4,99', period: '/mois', description: 'Tu commences. Un seul compte suffit.',
+    features: ['1 compte de trading', 'Trades illimités', 'Statistiques du compte', 'Calendrier P&L', 'Calcul R:R automatique'],
+    notIncluded: ['Stats globales', 'Playbook', 'Export données'],
     badge: null, accent: false, priceKey: 'starter',
   },
   {
-    name: 'Pro', price: '9,99', period: '/mois', description: 'Pour les traders serieux',
-    features: ['3 comptes de trading', 'Trades illimites', 'Statistiques du compte', 'Statistiques globales', 'Calendrier P&L', 'Calcul R:R automatique', 'Playbook & Checklist'],
-    notIncluded: ['Export donnees'],
+    name: 'Pro', price: '9,99', period: '/mois', description: 'Tu trades sérieusement. Tes comptes restent séparés.',
+    features: ['3 comptes de trading', 'Trades illimités', 'Statistiques du compte', 'Statistiques globales', 'Calendrier P&L', 'Calcul R:R automatique', 'Playbook & Checklist'],
+    notIncluded: ['Export données'],
     badge: 'Populaire', accent: true, priceKey: 'pro',
   },
   {
-    name: 'Unlimited', price: '19,99', period: '/mois', description: 'Acces complet sans limites',
-    features: ['Comptes illimites', 'Trades illimites', 'Statistiques du compte', 'Statistiques globales', 'Calendrier P&L', 'Calcul R:R automatique', 'Playbook & Checklist', 'Export donnees'],
+    name: 'Unlimited', price: '19,99', period: '/mois', description: 'Comptes illimités. Pour les prop traders multi-comptes.',
+    features: ['Comptes illimités', 'Trades illimités', 'Statistiques du compte', 'Statistiques globales', 'Calendrier P&L', 'Calcul R:R automatique', 'Playbook & Checklist', 'Export données'],
     notIncluded: [],
     badge: 'Best Value', accent: false, priceKey: 'unlimited',
   },
@@ -51,7 +51,7 @@ function MockDashboard() {
           ))}
         </div>
         <div className="bg-[#13151F] border border-white/[0.06] rounded-lg p-2.5">
-          <div className="text-[0.5rem] text-gray-500 uppercase tracking-wider font-mono mb-2">Calendrier P&L - Fevrier 2026</div>
+          <div className="text-[0.5rem] text-gray-500 uppercase tracking-wider font-mono mb-2">Calendrier P&L - Février 2026</div>
           <div className="grid grid-cols-7 gap-1">
             {['L','M','M','J','V','S','D'].map((d,i) => (
               <div key={i} className="text-center text-[0.45rem] text-gray-600 font-mono">{d}</div>
@@ -74,9 +74,9 @@ function MockDashboard() {
 
 function MockTrades() {
   const trades = [
-    { inst: 'NQ', type: 'LONG', pnl: '+850.00€', pct: '+0.82%', rr: '2.83R', date: 'Lun. 10 fev.', win: true },
-    { inst: 'ES', type: 'SHORT', pnl: '-300.00€', pct: '-0.29%', rr: '-1.00R', date: 'Ven. 7 fev.', win: false },
-    { inst: 'NQ', type: 'LONG', pnl: '+1,200.00€', pct: '+1.16%', rr: '4.00R', date: 'Jeu. 6 fev.', win: true },
+    { inst: 'NQ', type: 'LONG', pnl: '+850.00€', pct: '+0.82%', rr: '2.83R', date: 'Lun. 10 fév.', win: true },
+    { inst: 'ES', type: 'SHORT', pnl: '-300.00€', pct: '-0.29%', rr: '-1.00R', date: 'Ven. 7 fév.', win: false },
+    { inst: 'NQ', type: 'LONG', pnl: '+1,200.00€', pct: '+1.16%', rr: '4.00R', date: 'Jeu. 6 fév.', win: true },
   ];
   return (
     <div className="bg-[#08090E] rounded-xl border border-white/[0.06] overflow-hidden text-white text-[0.65rem] shadow-2xl">
@@ -169,7 +169,7 @@ function MockStats() {
           </div>
         </div>
         <div className="bg-[#13151F] border border-white/[0.06] rounded-lg p-2.5 text-center">
-          <div className="text-[0.5rem] text-gray-500 uppercase tracking-wider font-mono mb-1">Respect Strategie</div>
+          <div className="text-[0.5rem] text-gray-500 uppercase tracking-wider font-mono mb-1">Respect Stratégie</div>
           <div className="text-xl font-bold text-green-400">87%</div>
           <div className="text-[0.5rem] text-gray-400">41 / 47 trades</div>
         </div>
@@ -180,8 +180,8 @@ function MockStats() {
 
 function MockPlaybook() {
   const rules = [
-    { text: 'Attendre confirmation du setup avant entree', checked: true },
-    { text: 'Stop loss place AVANT le trade', checked: true },
+    { text: 'Attendre confirmation du setup avant entrée', checked: true },
+    { text: 'Stop loss placé AVANT le trade', checked: true },
     { text: 'Max 2 trades par jour', checked: true },
     { text: 'Pas de trade pendant les news', checked: false },
     { text: 'Respecter le R:R minimum de 2:1', checked: true },
@@ -211,9 +211,39 @@ function MockPlaybook() {
   );
 }
 
+const painPoints = [
+  { emoji: '😩', text: '"J\'ai essayé Excel.\nJ\'ai abandonné après 2 semaines."' },
+  { emoji: '😤', text: '"J\'ai 2 comptes FTMO et je mélange tout."' },
+  { emoji: '📉', text: '"Je refais les mêmes erreurs sans m\'en rendre compte."' },
+];
+
+const faqs = [
+  {
+    q: 'Est-ce que je dois rentrer mes trades à la main ?',
+    a: 'Oui — et c\'est volontaire. Saisir ton trade te force à le valider consciemment. TradeScope est conçu pour que ça prenne moins de 30 secondes.',
+  },
+  {
+    q: 'Ça marche pour quels marchés ?',
+    a: 'TradeScope est optimisé pour les Futures (NQ, ES, CL...) et les Indices. Forex et crypto sont aussi supportés.',
+  },
+  {
+    q: 'Je peux gérer mon compte FTMO et mon compte perso séparément ?',
+    a: 'C\'est exactement pour ça qu\'on a créé TradeScope. Chaque compte a ses propres stats, son propre P&L, son propre historique. Zéro mélange.',
+  },
+  {
+    q: 'Je peux annuler quand je veux ?',
+    a: 'Oui. Pas de contrat, pas d\'engagement. Tu annules en 1 clic depuis ton dashboard.',
+  },
+  {
+    q: 'C\'est quoi la différence avec un Excel ?',
+    a: 'Excel ne calcule pas ton R:R automatiquement, ne te montre pas tes patterns par jour de semaine, et ne te force pas à respecter ton playbook. Et surtout — tu abandonneras Excel dans 2 semaines. TradeScope, non.',
+  },
+];
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-bg-primary">
+
       {/* Header */}
       <header className="border-b border-brd px-6 py-4 flex justify-between items-center max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
@@ -229,18 +259,22 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="max-w-4xl mx-auto text-center pt-20 pb-16 px-6">
         <div className="inline-block px-4 py-1.5 bg-accent-dim border border-accent/20 rounded-full text-accent text-xs font-semibold font-mono tracking-wider mb-6">
-          7 JOURS D ESSAI GRATUIT
+          🎯 CONÇU POUR LES PROP TRADERS & TRADERS SÉRIEUX — FUTURES & INDICES
         </div>
         <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
           Le journal de trading<br />
-          <span className="bg-gradient-to-r from-accent to-purple-400 bg-clip-text text-transparent">qui te rend meilleur</span>
+          <span className="bg-gradient-to-r from-accent to-purple-400 bg-clip-text text-transparent">que tu vas enfin utiliser</span>
         </h1>
-        <p className="text-txt-2 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-          Track tes trades, analyse tes stats, identifie tes forces et faiblesses. TradeScope t aide a devenir un trader consistant et rentable.
+        <p className="text-txt-2 text-lg md:text-xl max-w-2xl mx-auto mb-4 leading-relaxed">
+          Tu sais que tu devrais tenir un journal. Tu ne le fais pas.
+        </p>
+        <p className="text-txt-2 text-base max-w-xl mx-auto mb-10 leading-relaxed">
+          TradeScope règle ça — en 30 secondes par trade, sur Futures et Indices.
         </p>
         <Link href="/auth/register" className="inline-flex items-center gap-2 px-8 py-3.5 bg-accent text-white font-bold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-accent-glow text-lg">
-          Commencer — C est gratuit 7 jours
+          Essayer gratuitement 7 jours — sans carte bancaire
         </Link>
+        <p className="text-txt-3 text-xs mt-3">Annulation en 1 clic. Aucun engagement.</p>
       </section>
 
       {/* App Preview - Dashboard */}
@@ -253,70 +287,100 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Pain Points */}
+      <section className="max-w-5xl mx-auto px-6 pb-24">
+        <h2 className="font-display text-3xl font-bold text-center mb-3 tracking-tight">Tu ressembles à ça ?</h2>
+        <p className="text-txt-2 text-center mb-12 max-w-xl mx-auto">La plupart des traders sérieux ont ce problème. TradeScope a été conçu exactement pour ça.</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          {painPoints.map((p, i) => (
+            <div key={i} className="bg-bg-card border border-brd rounded-xl p-6 text-center hover:border-brd-hover transition-all">
+              <div className="text-4xl mb-4">{p.emoji}</div>
+              <p className="text-txt-2 text-sm leading-relaxed whitespace-pre-line font-medium">{p.text}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-center font-bold text-accent text-lg">TradeScope a été conçu exactement pour ça.</p>
+      </section>
+
       {/* Features with Previews */}
       <section className="max-w-6xl mx-auto px-6 pb-24">
-        <h2 className="font-display text-3xl font-bold text-center mb-3 tracking-tight">Tout ce qu il te faut</h2>
-        <p className="text-txt-2 text-center mb-16 max-w-xl mx-auto">Des outils concrets pour analyser, progresser et rester discipline.</p>
+        <h2 className="font-display text-3xl font-bold text-center mb-3 tracking-tight">Tout ce qu'il te faut</h2>
+        <p className="text-txt-2 text-center mb-16 max-w-xl mx-auto">Des outils concrets pour analyser, progresser et rester discipliné.</p>
 
-        {/* Feature 1: Trades */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
-          <div>
-            <div className="inline-block px-3 py-1 bg-accent-dim text-accent text-xs font-bold rounded-full font-mono mb-4">TRADES</div>
-            <h3 className="font-display font-bold text-2xl mb-3">Tous tes trades, organises</h3>
-            <p className="text-txt-2 leading-relaxed mb-4">Ajoute tes trades en un clic. P&L, instrument, type, risque, taille — tout est calcule automatiquement. Le R:R se met a jour en temps reel.</p>
-            <ul className="space-y-2 text-sm text-txt-2">
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Calcul R:R automatique</li>
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Filtres par periode, wins/losses</li>
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Export CSV en un clic</li>
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Lien TradingView par trade</li>
-            </ul>
-          </div>
-          <div className="lg:pl-8">
-            <MockTrades />
-          </div>
-        </div>
-
-        {/* Feature 2: Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
-          <div className="lg:order-2">
-            <div className="inline-block px-3 py-1 bg-accent-dim text-accent text-xs font-bold rounded-full font-mono mb-4">STATISTIQUES</div>
-            <h3 className="font-display font-bold text-2xl mb-3">Comprends tes performances</h3>
-            <p className="text-txt-2 leading-relaxed mb-4">Quel jour tu trades le mieux ? Long ou short ? Est-ce que tu respectes ta strategie ? Les stats te disent tout, sans mentir.</p>
-            <ul className="space-y-2 text-sm text-txt-2">
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Performance par jour de la semaine</li>
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Long vs Short avec win rate</li>
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Taux de respect de strategie</li>
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Meilleurs instruments</li>
-            </ul>
-          </div>
-          <div className="lg:order-1 lg:pr-8">
-            <MockStats />
-          </div>
-        </div>
-
-        {/* Feature 3: Playbook */}
+        {/* Feature 1: Playbook — EN PREMIER car différenciateur unique */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
           <div>
             <div className="inline-block px-3 py-1 bg-accent-dim text-accent text-xs font-bold rounded-full font-mono mb-4">PLAYBOOK</div>
-            <h3 className="font-display font-bold text-2xl mb-3">Reste discipline, chaque jour</h3>
-            <p className="text-txt-2 leading-relaxed mb-4">Definis tes regles de trading et coche-les avant chaque session. Le playbook te garde focus et t empeche de devier de ton plan.</p>
+            <h3 className="font-display font-bold text-2xl mb-3">Arrête de dévier de ton plan. Chaque jour.</h3>
+            <p className="text-txt-2 leading-relaxed mb-4">
+              Tes règles. Ta checklist. Ton score de discipline. TradeScope te montre si tu te respectes, trade après trade — pas juste en théorie.
+            </p>
             <ul className="space-y-2 text-sm text-txt-2">
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Checklist quotidienne</li>
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Regles personnalisables</li>
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Pourcentage de completion</li>
-              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Suivi de la discipline</li>
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Checklist quotidienne personnalisable</li>
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Score de discipline en temps réel</li>
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Tes règles, pas celles d'un autre</li>
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Suivi sur la durée</li>
             </ul>
           </div>
           <div className="lg:pl-8">
             <MockPlaybook />
           </div>
         </div>
+
+        {/* Feature 2: Trades */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
+          <div className="lg:order-2">
+            <div className="inline-block px-3 py-1 bg-accent-dim text-accent text-xs font-bold rounded-full font-mono mb-4">JOURNAL</div>
+            <h3 className="font-display font-bold text-2xl mb-3">30 secondes par trade. Pas plus.</h3>
+            <p className="text-txt-2 leading-relaxed mb-4">
+              P&L, R:R, instrument, direction — tout calculé automatiquement. Tu trades, tu cliques, tu passes à autre chose. Fini l'excuse du "c'est trop long à remplir".
+            </p>
+            <ul className="space-y-2 text-sm text-txt-2">
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Calcul R:R automatique</li>
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Filtres par période, wins/losses</li>
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Export CSV en un clic</li>
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Lien TradingView par trade</li>
+            </ul>
+          </div>
+          <div className="lg:order-1 lg:pr-8">
+            <MockTrades />
+          </div>
+        </div>
+
+        {/* Feature 3: Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
+          <div>
+            <div className="inline-block px-3 py-1 bg-accent-dim text-accent text-xs font-bold rounded-full font-mono mb-4">STATISTIQUES</div>
+            <h3 className="font-display font-bold text-2xl mb-3">Les stats te disent tout, sans mentir.</h3>
+            <p className="text-txt-2 leading-relaxed mb-4">
+              Quel jour tu trades le mieux ? Long ou short ? Est-ce que tu respectes ta stratégie ? Arrête de trader à l'instinct. Commence à trader avec des données.
+            </p>
+            <ul className="space-y-2 text-sm text-txt-2">
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Performance par jour de la semaine</li>
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Long vs Short avec win rate</li>
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Taux de respect de stratégie</li>
+              <li className="flex items-center gap-2"><span className="text-profit">✓</span> Meilleurs instruments</li>
+            </ul>
+          </div>
+          <div className="lg:pl-8">
+            <MockStats />
+          </div>
+        </div>
+
+        {/* Feature 4: Multi-comptes — Prop traders */}
+        <div className="bg-bg-card border border-brd rounded-2xl p-10 text-center hover:border-brd-hover transition-all">
+          <div className="inline-block px-3 py-1 bg-accent-dim text-accent text-xs font-bold rounded-full font-mono mb-4">MULTI-COMPTES</div>
+          <h3 className="font-display font-bold text-2xl mb-3">FTMO, compte perso, challenge — enfin séparés.</h3>
+          <p className="text-txt-2 leading-relaxed max-w-2xl mx-auto">
+            Chaque compte a ses propres stats, son propre P&L, sa propre progression. Tu sais exactement où tu en es sur chacun — sans jamais mélanger.
+          </p>
+        </div>
       </section>
 
       {/* Pricing */}
       <section className="max-w-6xl mx-auto px-6 pb-24" id="pricing">
-        <h2 className="font-display text-3xl font-bold text-center mb-3 tracking-tight">Tarifs simples et transparents</h2>
-        <p className="text-txt-2 text-center mb-12">7 jours d essai gratuit sur tous les plans. Annule quand tu veux.</p>
+        <h2 className="font-display text-3xl font-bold text-center mb-3 tracking-tight">Commence gratuitement. Paie si tu aimes.</h2>
+        <p className="text-txt-2 text-center mb-12">7 jours sans carte bancaire. Annule en 1 clic.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {plans.map((plan) => (
             <div key={plan.name} className={`relative bg-bg-card border rounded-xl p-8 transition-all hover:-translate-y-1 ${plan.accent ? 'border-accent shadow-lg shadow-accent-glow' : 'border-brd hover:border-brd-hover'}`}>
@@ -330,7 +394,7 @@ export default function LandingPage() {
                 <span className="text-txt-2 text-sm">{plan.period}</span>
               </div>
               <Link href={`/auth/register?plan=${plan.priceKey}`} className={`block text-center py-3 rounded-lg font-semibold text-sm transition-all mb-8 ${plan.accent ? 'bg-accent text-white hover:opacity-90 shadow-lg shadow-accent-glow' : 'border border-brd text-txt-2 hover:border-accent hover:text-accent hover:bg-accent-dim'}`}>
-                Essai gratuit 7 jours
+                Essai gratuit 7 jours — sans carte
               </Link>
               <ul className="space-y-3">
                 {plan.features.map((f) => (<li key={f} className="flex items-center gap-2 text-sm"><span className="text-profit text-xs">✓</span> {f}</li>))}
@@ -341,24 +405,55 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section className="max-w-3xl mx-auto px-6 pb-24">
+        <h2 className="font-display text-3xl font-bold text-center mb-3 tracking-tight">Questions fréquentes</h2>
+        <p className="text-txt-2 text-center mb-12">Tout ce que tu te demandes avant de te lancer.</p>
+        <div className="space-y-4">
+          {faqs.map((faq, i) => (
+            <div key={i} className="bg-bg-card border border-brd rounded-xl p-6 hover:border-brd-hover transition-all">
+              <h3 className="font-semibold text-base mb-2">{faq.q}</h3>
+              <p className="text-txt-2 text-sm leading-relaxed">{faq.a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="max-w-3xl mx-auto px-6 pb-24 text-center">
+        <div className="bg-bg-card border border-accent/20 rounded-2xl p-12 shadow-lg shadow-accent-glow/10">
+          <h2 className="font-display text-3xl font-bold mb-4 tracking-tight">
+            Prêt à trader avec plus de clarté ?
+          </h2>
+          <p className="text-txt-2 text-lg mb-8 max-w-xl mx-auto">
+            Rejoins les traders qui ont arrêté de se mentir sur leurs performances.
+          </p>
+          <Link href="/auth/register" className="inline-flex items-center gap-2 px-8 py-3.5 bg-accent text-white font-bold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-accent-glow text-lg">
+            Essayer gratuitement 7 jours — sans carte bancaire
+          </Link>
+          <p className="text-txt-3 text-xs mt-3">Annulation en 1 clic. Aucun engagement.</p>
+        </div>
+      </section>
+
       {/* Contact */}
       <section id="contact" className="py-20 px-6">
         <div className="max-w-lg mx-auto">
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4 text-center">Une question ?</h2>
-          <p className="text-txt-2 mb-8 text-center">Envoie-nous un message, on repond rapidement.</p>
+          <p className="text-txt-2 mb-8 text-center">Envoie-nous un message, on répond rapidement.</p>
           <ContactForm />
         </div>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-brd py-8 px-6 text-center text-txt-3 text-sm">
-        <p>&copy; {new Date().getFullYear()} TradeScope. Tous droits reserves.</p>
+        <p>&copy; {new Date().getFullYear()} TradeScope. Tous droits réservés.</p>
         <div className="mt-2 flex items-center justify-center gap-4">
           <a href="/cgv" className="text-txt-3 hover:text-accent transition-colors underline">CGV</a>
           <span className="text-brd">·</span>
           <a href="mailto:support@tradescopev2.fr" className="text-txt-3 hover:text-accent transition-colors underline">Contact</a>
         </div>
       </footer>
+
     </div>
   );
 }
