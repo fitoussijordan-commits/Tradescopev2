@@ -15,14 +15,14 @@ export async function GET(request) {
       const trialExpiresAt = new Date();
       trialExpiresAt.setDate(trialExpiresAt.getDate() + 7);
 
-      await supabase
-        .from('profiles')
-        .update({
-          trial_expires_at: trialExpiresAt.toISOString(),
-          subscription_status: 'trialing',
-          plan: plan,
-        })
-        .eq('id', data.user.id);
+     await supabase
+  .from('profiles')
+  .update({
+    trial_ends_at: trialExpiresAt.toISOString(), // ← était trial_expires_at
+    subscription_status: 'trialing',
+    plan: plan,
+  })
+  .eq('id', data.user.id);
 
       // Email de bienvenue
       await fetch(`${origin}/api/emails/welcome`, {
