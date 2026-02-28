@@ -13,6 +13,7 @@ const menuItems = [
     { path: '/statistics', icon: '△', name: 'Stats Compte' },
     { path: '/global-stats', icon: '◎', name: 'Stats Globales', requiredPlan: ['pro', 'unlimited'] },
     { path: '/strategies', icon: '◬', name: 'Stratégies' },
+    { path: '/ai-analysis', icon: '✦', name: 'Analyse IA' },
   ]},
   { label: 'Outils', items: [
     { path: '/strategies', icon: '◆', name: 'Stratégies' },

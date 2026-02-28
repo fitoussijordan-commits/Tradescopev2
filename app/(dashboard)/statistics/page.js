@@ -7,6 +7,8 @@ import { useAccount } from '@/components/AccountContext';
 export default function StatisticsPage() {
   const { currentAccount, currentAccountId } = useAccount();
   const [trades, setTrades] = useState([]);
+  const [strategies, setStrategies] = useState([]);
+  const [stratFilter, setStratFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadData(); }, [currentAccountId]);
@@ -15,23 +17,33 @@ export default function StatisticsPage() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data: t } = await supabase.from('trades').select('*').eq('user_id', user.id).eq('is_payout', false);
+    const [{ data: t }, sRes] = await Promise.all([
+      supabase.from('trades').select('*').eq('user_id', user.id).eq('is_payout', false),
+      fetch('/api/strategies'),
+    ]);
+    const s = await sRes.json();
     setTrades(t || []);
+    setStrategies(Array.isArray(s) ? s : []);
     setLoading(false);
   };
 
-  const at = trades.filter(t => t.account_id === currentAccountId);
+  // Filtrage par stratégie
+  const allAccountTrades = trades.filter(t => t.account_id === currentAccountId);
+  const at = (() => {
+    if (stratFilter === 'all') return allAccountTrades;
+    if (stratFilter === 'hors') return allAccountTrades.filter(t => !t.strategy_id);
+    return allAccountTrades.filter(t => t.strategy_id === stratFilter);
+  })();
+
   const account = currentAccount;
   const fmt = (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(v);
 
-  // Day performance
   const dayNames = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
   const dayPnl = {};
   dayNames.forEach(d => dayPnl[d] = 0);
   at.forEach(t => { const di = new Date(t.date).getDay(); dayPnl[dayNames[di === 0 ? 6 : di - 1]] += parseFloat(t.pnl); });
   const maxDay = Math.max(...Object.values(dayPnl).map(Math.abs), 1);
 
-  // Long vs Short
   const longs = at.filter(t => t.type === 'LONG');
   const shorts = at.filter(t => t.type === 'SHORT');
   const longPnl = longs.reduce((s, t) => s + parseFloat(t.pnl), 0);
@@ -39,20 +51,17 @@ export default function StatisticsPage() {
   const longWR = longs.length > 0 ? ((longs.filter(t => t.pnl > 0).length / longs.length) * 100).toFixed(0) : 0;
   const shortWR = shorts.length > 0 ? ((shorts.filter(t => t.pnl > 0).length / shorts.length) * 100).toFixed(0) : 0;
 
-  // Strategy
   const withStrat = at.filter(t => t.followed_strategy);
   const stratPct = at.length > 0 ? ((withStrat.length / at.length) * 100).toFixed(1) : 0;
   const withStratPnl = withStrat.reduce((s, t) => s + parseFloat(t.pnl), 0);
   const withoutStrat = at.filter(t => !t.followed_strategy);
   const withoutStratPnl = withoutStrat.reduce((s, t) => s + parseFloat(t.pnl), 0);
 
-  // R:R
   const rrTrades = at.filter(t => t.rr != null);
   const avgRR = rrTrades.length > 0 ? (rrTrades.reduce((s, t) => s + parseFloat(t.rr), 0) / rrTrades.length).toFixed(2) : null;
   const bestRR = rrTrades.length > 0 ? Math.max(...rrTrades.map(t => parseFloat(t.rr))).toFixed(2) : null;
   const worstRR = rrTrades.length > 0 ? Math.min(...rrTrades.map(t => parseFloat(t.rr))).toFixed(2) : null;
 
-  // Session performance
   const londonTrades = at.filter(t => t.session === 'london');
   const usTrades = at.filter(t => t.session === 'us');
   const noSessionTrades = at.filter(t => !t.session);
@@ -63,17 +72,37 @@ export default function StatisticsPage() {
   const londonAvg = londonTrades.length > 0 ? londonPnl / londonTrades.length : 0;
   const usAvg = usTrades.length > 0 ? usPnl / usTrades.length : 0;
 
-  // Best instruments
   const instPnl = {};
   at.forEach(t => { if (t.instrument) { instPnl[t.instrument] = (instPnl[t.instrument] || 0) + parseFloat(t.pnl); } });
   const topInstruments = Object.entries(instPnl).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  const selectedStrat = strategies.find(s => s.id === stratFilter);
 
   if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
 
   return (
     <div className="animate-fade-up">
-      <div className="flex items-center gap-3 mb-5">
-        <span className="text-txt-3 text-sm">{at.length} trades</span>
+      {/* Filtre stratégie */}
+      <div className="flex items-center gap-3 mb-5 flex-wrap">
+        <div className="flex gap-1.5 flex-wrap">
+          <button onClick={() => setStratFilter('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${stratFilter === 'all' ? 'bg-accent text-white' : 'bg-bg-card border border-brd text-txt-2'}`}>
+            Toutes
+          </button>
+          <button onClick={() => setStratFilter('hors')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${stratFilter === 'hors' ? 'bg-accent text-white' : 'bg-bg-card border border-brd text-txt-2'}`}>
+            Hors stratégie
+          </button>
+          {strategies.map(s => (
+            <button key={s.id} onClick={() => setStratFilter(s.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${stratFilter === s.id ? 'text-white' : 'bg-bg-card border border-brd text-txt-2'}`}
+              style={stratFilter === s.id ? { backgroundColor: s.color } : {}}>
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: stratFilter === s.id ? 'white' : s.color }} />
+              {s.name}
+            </button>
+          ))}
+        </div>
+        <span className="text-txt-3 text-xs ml-auto">{at.length} trades{selectedStrat ? ` · ${selectedStrat.name}` : ''}</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
