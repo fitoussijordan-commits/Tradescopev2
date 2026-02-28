@@ -16,6 +16,7 @@ const menuItems = [
     { path: '/ai-analysis', icon: '✦', name: 'Analyse IA' },
   ]},
   { label: 'Outils', items: [
+    { path: '/strategies', icon: '◆', name: 'Stratégies' },
     { path: '/playbook', icon: '▦', name: 'Playbook', requiredPlan: ['pro', 'unlimited'] },
     { path: '/export', icon: '↓', name: 'Export Excel', requiredPlan: ['unlimited'] },
     { path: '/account', icon: '◉', name: 'Mon Compte' },
