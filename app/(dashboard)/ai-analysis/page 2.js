@@ -163,16 +163,19 @@ ${at.slice(0, 5).map(t => `  - ${t.date} | ${t.instrument} ${t.type} | P&L: ${pa
         </div>
       </div>
 
-      <div className="flex-shrink-0 mb-3">
+      {messages.length === 0 && (
+        <div className="flex-shrink-0 mb-4">
+          <p className="text-txt-3 text-xs mb-2 font-mono uppercase tracking-wider">Suggestions</p>
           <div className="flex flex-wrap gap-2">
             {PROMPTS.map((p, i) => (
-              <button key={i} onClick={() => sendMessage(p.text)} disabled={thinking}
-                className="px-3 py-1.5 bg-bg-card border border-brd rounded-lg text-xs font-semibold text-txt-2 hover:border-accent hover:text-accent transition-all disabled:opacity-40">
+              <button key={i} onClick={() => sendMessage(p.text)}
+                className="px-3 py-2 bg-bg-card border border-brd rounded-lg text-xs font-semibold text-txt-2 hover:border-accent hover:text-accent transition-all">
                 {p.label}
               </button>
             ))}
           </div>
         </div>
+      )}
 
       <div className="flex-1 overflow-y-auto space-y-4 mb-4 min-h-0">
         {messages.length === 0 && (
