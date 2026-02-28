@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
 
 export default function AccountPage() {
+  const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +40,7 @@ export default function AccountPage() {
       setAccounts([...accounts, data]);
       setNewAccount({ name: '', prop_firm: '', base_capital: '' });
       setShowAddForm(false);
+      router.refresh(); // Force re-render du layout pour mettre à jour le sélecteur de compte
     } else {
       alert(data.error);
     }
@@ -46,7 +49,7 @@ export default function AccountPage() {
   const deleteAccount = async (id, name) => {
     if (!confirm(`Supprimer "${name}" et tous ses trades ?`)) return;
     const res = await fetch(`/api/accounts?id=${id}`, { method: 'DELETE' });
-    if (res.ok) setAccounts(accounts.filter(a => a.id !== id));
+    if (res.ok) { setAccounts(accounts.filter(a => a.id !== id)); router.refresh(); }
   };
 
   const toggleBurn = async (account) => {
@@ -57,7 +60,7 @@ export default function AccountPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: account.id, name: account.name, prop_firm: account.prop_firm, is_burned: !account.is_burned }),
     });
-    if (res.ok) loadData();
+    if (res.ok) { loadData(); router.refresh(); }
   };
 
   const cancelSubscription = async () => {
@@ -81,7 +84,7 @@ export default function AccountPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, name: editForm.name, prop_firm: editForm.prop_firm, base_capital: parseFloat(editForm.base_capital) }),
     });
-    if (res.ok) { setEditingId(null); loadData(); }
+    if (res.ok) { setEditingId(null); loadData(); router.refresh(); }
     else { const d = await res.json(); alert(d.error || 'Erreur'); }
   };
 
