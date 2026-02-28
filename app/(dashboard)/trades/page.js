@@ -14,6 +14,10 @@ export default function TradesPage() {
   const [editForm, setEditForm] = useState({});
   const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '', strategy_id: '' });
   const [strategies, setStrategies] = useState([]);
+  const [showImport, setShowImport] = useState(false);
+  const [importData, setImportData] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
   // Calculate current capital for balance mode
   const currentCapital = (() => {
@@ -102,6 +106,157 @@ export default function TradesPage() {
     return true;
   });
 
+  // ============================================================
+  // TRADOVATE CSV IMPORT
+  // ============================================================
+  const parseSymbol = (sym) => {
+    if (!sym) return 'MNQ';
+    // MNQH6 -> MNQ, ESH6 -> ES, MESH6 -> MES, NQH6 -> NQ, etc.
+    const match = sym.match(/^([A-Z]+?)((?:[FGHJKMNQUVXZ])\d{1,2})$/);
+    if (match) return match[1];
+    return sym.replace(/[FGHJKMNQUVXZ]\d{1,2}$/, '') || sym;
+  };
+
+  const parseTradovatePnl = (pnlStr) => {
+    if (!pnlStr) return 0;
+    const cleaned = pnlStr.replace(/[$,\s]/g, '');
+    // $(205.00) = loss -> -205, $205.00 = profit -> +205
+    const matchLoss = cleaned.match(/^\((.+)\)$/);
+    if (matchLoss) return -parseFloat(matchLoss[1]);
+    return parseFloat(cleaned) || 0;
+  };
+
+  const parseTradovateDate = (timestamp) => {
+    // "02/25/2026 15:32:27" -> "2026-02-25" (US format MM/DD/YYYY)
+    if (!timestamp) return null;
+    const parts = timestamp.trim().split(' ')[0].split('/');
+    if (parts.length !== 3) return null;
+    const [mm, dd, yyyy] = parts;
+    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+  };
+
+  const detectTradeType = (boughtTs, soldTs) => {
+    // If bought before sold -> LONG, if sold before bought -> SHORT
+    if (!boughtTs || !soldTs) return 'LONG';
+    const boughtTime = new Date(boughtTs.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2'));
+    const soldTime = new Date(soldTs.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2'));
+    return boughtTime <= soldTime ? 'LONG' : 'SHORT';
+  };
+
+  const detectSession = (timestamp) => {
+    if (!timestamp) return null;
+    const parts = timestamp.trim().split(' ');
+    if (parts.length < 2) return null;
+    const timeParts = parts[1].split(':');
+    const hour = parseInt(timeParts[0]);
+    // Tradovate timestamps are in CT (Central Time)
+    // London session ~ 2:00-5:00 CT, US session ~ 8:30-15:00 CT
+    if (hour >= 2 && hour < 6) return 'london';
+    if (hour >= 8 && hour <= 16) return 'us';
+    return null;
+  };
+
+  const handleCSVFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length < 2) { alert('Fichier vide ou invalide'); return; }
+
+        const header = lines[0].split(',').map(h => h.trim());
+        const symIdx = header.indexOf('symbol');
+        const qtyIdx = header.indexOf('qty');
+        const pnlIdx = header.indexOf('pnl');
+        const boughtTsIdx = header.indexOf('boughtTimestamp');
+        const soldTsIdx = header.indexOf('soldTimestamp');
+        const durationIdx = header.indexOf('duration');
+        const buyPriceIdx = header.indexOf('buyPrice');
+        const sellPriceIdx = header.indexOf('sellPrice');
+
+        if (pnlIdx === -1) { alert('Colonne "pnl" introuvable dans le CSV'); return; }
+
+        const parsed = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',').map(c => c.trim());
+          if (cols.length < 3) continue;
+
+          const pnl = parseTradovatePnl(cols[pnlIdx]);
+          const boughtTs = boughtTsIdx >= 0 ? cols[boughtTsIdx] : null;
+          const soldTs = soldTsIdx >= 0 ? cols[soldTsIdx] : null;
+          // Use the earlier timestamp as the trade date
+          const entryTs = boughtTs && soldTs ?
+            (new Date(boughtTs.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) <= new Date(soldTs.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) ? boughtTs : soldTs) : (boughtTs || soldTs);
+
+          const date = parseTradovateDate(entryTs);
+          if (!date) continue;
+
+          const instrument = symIdx >= 0 ? parseSymbol(cols[symIdx]) : null;
+          const type = detectTradeType(boughtTs, soldTs);
+          const size = qtyIdx >= 0 ? parseFloat(cols[qtyIdx]) || null : null;
+          const session = detectSession(entryTs);
+          const duration = durationIdx >= 0 ? cols[durationIdx] : null;
+          const buyPrice = buyPriceIdx >= 0 ? cols[buyPriceIdx] : null;
+          const sellPrice = sellPriceIdx >= 0 ? cols[sellPriceIdx] : null;
+
+          // Build notes with extra info
+          const noteParts = [];
+          if (duration) noteParts.push(`Durée: ${duration}`);
+          if (buyPrice && sellPrice) noteParts.push(`Entry: ${type === 'LONG' ? buyPrice : sellPrice} → Exit: ${type === 'LONG' ? sellPrice : buyPrice}`);
+          if (boughtTs) noteParts.push(`Import Tradovate`);
+
+          parsed.push({
+            date, instrument, type, pnl, size, session,
+            notes: noteParts.length > 0 ? noteParts.join(' | ') : null,
+            _raw: { duration, buyPrice, sellPrice, boughtTs, soldTs },
+          });
+        }
+
+        if (parsed.length === 0) { alert('Aucun trade valide trouvé dans le CSV'); return; }
+
+        setImportData(parsed);
+        setImportResult(null);
+      } catch (err) {
+        alert('Erreur de parsing: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImportDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer?.files?.[0] || e.target?.files?.[0];
+    if (file && (file.name.endsWith('.csv') || file.type === 'text/csv')) {
+      handleCSVFile(file);
+    } else {
+      alert('Fichier CSV requis');
+    }
+  };
+
+  const submitImport = async () => {
+    if (!importData || importData.length === 0 || importing) return;
+    setImporting(true);
+    try {
+      const res = await fetch('/api/trades/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          account_id: currentAccountId,
+          trades: importData.map(({ _raw, ...t }) => t),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setImportResult({ success: true, count: data.imported });
+      setImportData(null);
+      loadData();
+    } catch (err) {
+      setImportResult({ success: false, error: err.message });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const fmt = (v) => (parseFloat(v) >= 0 ? '+' : '') + parseFloat(v).toFixed(2) + '€';
   if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
 
@@ -115,7 +270,10 @@ export default function TradesPage() {
             ))}
           </div>
         </div>
-        <button onClick={() => setShowModal(true)} className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-lg shadow-lg shadow-accent/25 active:scale-95 transition-all">+ Trade</button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowImport(true)} className="px-4 py-2.5 bg-bg-card border border-brd text-txt-2 text-sm font-semibold rounded-lg hover:border-accent hover:text-accent transition-all active:scale-95">↑ Import</button>
+          <button onClick={() => setShowModal(true)} className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-lg shadow-lg shadow-accent/25 active:scale-95 transition-all">+ Trade</button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-5">
@@ -295,6 +453,119 @@ export default function TradesPage() {
                 <button type="button" onClick={() => setEditModal(null)} className="px-6 py-3 border border-brd text-txt-2 rounded-lg text-sm">Annuler</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* IMPORT TRADOVATE MODAL */}
+      {/* ============================================================ */}
+      {showImport && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={() => { setShowImport(false); setImportData(null); setImportResult(null); }}>
+          <div className="bg-bg-card border border-brd rounded-xl p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h2 className="font-display font-bold text-lg">Import Tradovate</h2>
+                <p className="text-txt-3 text-xs mt-0.5">Importe tes trades depuis un export CSV Tradovate</p>
+              </div>
+              <button onClick={() => { setShowImport(false); setImportData(null); setImportResult(null); }} className="w-8 h-8 rounded-lg border border-brd text-txt-3 hover:text-txt-1 hover:border-accent transition-all text-sm flex items-center justify-center">✕</button>
+            </div>
+
+            {/* Success message */}
+            {importResult?.success && (
+              <div className="bg-profit-dim border border-profit/20 rounded-xl p-4 mb-4 text-center">
+                <div className="text-2xl mb-2">✓</div>
+                <div className="font-bold text-profit">{importResult.count} trade{importResult.count > 1 ? 's' : ''} importé{importResult.count > 1 ? 's' : ''} !</div>
+                <button onClick={() => { setShowImport(false); setImportResult(null); }} className="mt-3 px-4 py-2 bg-profit text-white text-sm font-bold rounded-lg">Fermer</button>
+              </div>
+            )}
+
+            {/* Error message */}
+            {importResult?.success === false && (
+              <div className="bg-loss-dim border border-loss/20 rounded-xl p-4 mb-4">
+                <div className="text-loss font-bold text-sm">❌ Erreur: {importResult.error}</div>
+              </div>
+            )}
+
+            {/* Drop zone */}
+            {!importData && !importResult?.success && (
+              <div
+                onDragOver={e => e.preventDefault()}
+                onDrop={handleImportDrop}
+                className="border-2 border-dashed border-brd hover:border-accent rounded-xl p-10 text-center transition-all cursor-pointer"
+                onClick={() => document.getElementById('csv-input').click()}
+              >
+                <input id="csv-input" type="file" accept=".csv" className="hidden" onChange={e => handleImportDrop(e)} />
+                <div className="text-3xl mb-3 opacity-40">↑</div>
+                <p className="font-semibold text-sm mb-1">Glisse ton fichier CSV ici</p>
+                <p className="text-txt-3 text-xs">ou clique pour sélectionner</p>
+                <div className="mt-4 pt-4 border-t border-brd">
+                  <p className="text-txt-3 text-[0.6rem] font-mono">Format attendu: export Tradovate "Performance"</p>
+                  <p className="text-txt-3 text-[0.6rem] font-mono">Colonnes: symbol, qty, pnl, boughtTimestamp, soldTimestamp, duration</p>
+                </div>
+              </div>
+            )}
+
+            {/* Preview */}
+            {importData && !importResult?.success && (
+              <div className="space-y-4">
+                {/* Summary */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-bg-secondary border border-brd rounded-lg p-3 text-center">
+                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">Trades</div>
+                    <div className="text-xl font-bold font-display">{importData.length}</div>
+                  </div>
+                  <div className="bg-bg-secondary border border-brd rounded-lg p-3 text-center">
+                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">P&L Total</div>
+                    <div className={`text-xl font-bold font-display font-mono ${importData.reduce((s, t) => s + t.pnl, 0) >= 0 ? 'text-profit' : 'text-loss'}`}>
+                      {fmt(importData.reduce((s, t) => s + t.pnl, 0))}
+                    </div>
+                  </div>
+                  <div className="bg-bg-secondary border border-brd rounded-lg p-3 text-center">
+                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">Win Rate</div>
+                    <div className={`text-xl font-bold font-display ${importData.length > 0 && (importData.filter(t => t.pnl > 0).length / importData.length * 100) >= 50 ? 'text-profit' : 'text-loss'}`}>
+                      {importData.length > 0 ? (importData.filter(t => t.pnl > 0).length / importData.length * 100).toFixed(0) : 0}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Destination */}
+                <div className="bg-accent-dim border border-accent/20 rounded-lg px-4 py-3 flex items-center gap-2">
+                  <span className="text-accent text-xs font-bold">→</span>
+                  <span className="text-sm">Import vers <strong>{currentAccount?.name}</strong> ({currentAccount?.prop_firm})</span>
+                </div>
+
+                {/* Trade list preview */}
+                <div className="border border-brd rounded-xl overflow-hidden">
+                  <div className="px-4 py-2.5 bg-bg-secondary border-b border-brd">
+                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">Aperçu des trades</div>
+                  </div>
+                  <div className="divide-y divide-brd max-h-64 overflow-y-auto">
+                    {importData.map((t, i) => (
+                      <div key={i} className="px-4 py-2.5 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm">{t.instrument || '?'}</span>
+                          <span className={`text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono ${t.type === 'LONG' ? 'bg-profit-dim text-profit' : 'bg-loss-dim text-loss'}`}>{t.type}</span>
+                          <span className="text-txt-3 text-xs font-mono">{new Date(t.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                          {t.size && <span className="text-txt-3 text-[0.55rem] font-mono">{t.size} cts</span>}
+                          {t.session && <span className={`text-[0.5rem] font-bold px-1 py-0.5 rounded font-mono ${t.session === 'london' ? 'bg-blue-500/15 text-blue-400' : 'bg-amber-500/15 text-amber-400'}`}>{t.session === 'london' ? '🇬🇧' : '🇺🇸'}</span>}
+                        </div>
+                        <div className={`font-mono font-bold text-sm ${t.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(t.pnl)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <button onClick={submitImport} disabled={importing}
+                    className="flex-1 bg-accent text-white font-bold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all disabled:opacity-50">
+                    {importing ? 'Import en cours...' : `Importer ${importData.length} trade${importData.length > 1 ? 's' : ''}`}
+                  </button>
+                  <button onClick={() => { setImportData(null); }} className="px-6 py-3 border border-brd text-txt-2 rounded-lg text-sm">Annuler</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
