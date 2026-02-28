@@ -144,7 +144,6 @@ export default function TradesPage() {
                   {t.followed_strategy && <span className="text-profit text-xs">✓</span>}
                   {t.strategies && <span className="text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono" style={{backgroundColor: t.strategies.color + '25', color: t.strategies.color}}>▦ {t.strategies.name}</span>}
                   {t.session && <span className={`text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono ${t.session === 'london' ? 'bg-blue-500/15 text-blue-400' : 'bg-amber-500/15 text-amber-400'}`}>{t.session === 'london' ? '🇬🇧 AM' : '🇺🇸 PM'}</span>}
-                  {t.strategies && <span className="text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono text-white" style={{ backgroundColor: t.strategies.color + '99' }}>{t.strategies.name}</span>}
                 </div>
                 <div className="text-[0.78rem] text-txt-2 font-mono mt-0.5">{new Date(t.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
               </div>
@@ -232,13 +231,6 @@ export default function TradesPage() {
                   </select>
                 </div>
               )}
-              <div>
-                <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Stratégie</label>
-                <select value={form.strategy_id} onChange={e => setForm({...form, strategy_id: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">
-                  <option value="">Hors stratégie</option>
-                  {strategies.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-              </div>
               <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Notes</label><textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows="2" placeholder="Notes..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent resize-none" /></div>
               <div className="flex gap-3 pt-2">
                 <button type="submit" className="flex-1 bg-accent text-white font-bold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all">Ajouter</button>
