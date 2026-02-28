@@ -10,7 +10,8 @@ export default function TradesPage() {
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState('all');
   const [deleting, setDeleting] = useState(null);
-  const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '' });
+  const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '', strategy_id: '' });
+  const [strategies, setStrategies] = useState([]);
 
   // Calculate current capital for balance mode
   const currentCapital = (() => {
@@ -27,8 +28,12 @@ export default function TradesPage() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data: t } = await supabase.from('trades').select('*').eq('user_id', user.id).order('date', { ascending: false }).order('created_at', { ascending: false });
+    const [{ data: t }, { data: s }] = await Promise.all([
+      supabase.from('trades').select('*, strategies(id, name, color)').eq('user_id', user.id).order('date', { ascending: false }).order('created_at', { ascending: false }),
+      supabase.from('strategies').select('*').eq('user_id', user.id).order('created_at'),
+    ]);
     setTrades(t || []);
+    setStrategies(s || []);
     setLoading(false);
   };
 
@@ -46,9 +51,9 @@ export default function TradesPage() {
     const pnlPercent = (pnl / currentCapital) * 100;
     const res = await fetch('/api/trades', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ account_id: currentAccountId, date: form.date, instrument: form.is_payout ? null : form.instrument, type: form.is_payout ? null : form.type, pnl: form.is_payout && pnl > 0 ? -pnl : pnl, risk, pnl_percent: pnlPercent, size: parseFloat(form.size) || null, trading_view_link: form.trading_view_link || null, followed_strategy: form.followed_strategy, notes: form.notes || null, is_payout: form.is_payout, session: form.session || null }),
+      body: JSON.stringify({ account_id: currentAccountId, date: form.date, instrument: form.is_payout ? null : form.instrument, type: form.is_payout ? null : form.type, pnl: form.is_payout && pnl > 0 ? -pnl : pnl, risk, pnl_percent: pnlPercent, size: parseFloat(form.size) || null, trading_view_link: form.trading_view_link || null, followed_strategy: form.followed_strategy, notes: form.notes || null, is_payout: form.is_payout, session: form.session || null, strategy_id: form.strategy_id || null }),
     });
-    if (res.ok) { setShowModal(false); setForm({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '' }); loadData(); }
+    if (res.ok) { setShowModal(false); setForm({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '', strategy_id: '' }); loadData(); }
     else { const err = await res.json(); alert(err.error); }
   };
 
@@ -107,7 +112,9 @@ export default function TradesPage() {
                   <span className="font-bold">{t.instrument || '-'}</span>
                   <span className={'inline-block px-2 py-0.5 rounded text-[0.6rem] font-bold uppercase font-mono ' + (t.type === 'LONG' ? 'bg-profit-dim text-profit' : 'bg-loss-dim text-loss')}>{t.type}</span>
                   {t.followed_strategy && <span className="text-profit text-xs">✓</span>}
+                  {t.strategies && <span className="text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono" style={{backgroundColor: t.strategies.color + '25', color: t.strategies.color}}>▦ {t.strategies.name}</span>}
                   {t.session && <span className={`text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono ${t.session === 'london' ? 'bg-blue-500/15 text-blue-400' : 'bg-amber-500/15 text-amber-400'}`}>{t.session === 'london' ? '🇬🇧 AM' : '🇺🇸 PM'}</span>}
+                  {t.strategies && <span className="text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono text-white" style={{ backgroundColor: t.strategies.color + '99' }}>{t.strategies.name}</span>}
                 </div>
                 <div className="text-[0.78rem] text-txt-2 font-mono mt-0.5">{new Date(t.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
               </div>
@@ -184,6 +191,23 @@ export default function TradesPage() {
                   </div>
                 </div>
               </>)}
+              {!form.is_payout && strategies.length > 0 && (
+                <div>
+                  <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Stratégie</label>
+                  <select value={form.strategy_id} onChange={e => setForm({...form, strategy_id: e.target.value})}
+                    className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">
+                    <option value="">Hors stratégie</option>
+                    {strategies.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+              )}
+              <div>
+                <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Stratégie</label>
+                <select value={form.strategy_id} onChange={e => setForm({...form, strategy_id: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">
+                  <option value="">Hors stratégie</option>
+                  {strategies.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
               <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Notes</label><textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows="2" placeholder="Notes..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent resize-none" /></div>
               <div className="flex gap-3 pt-2">
                 <button type="submit" className="flex-1 bg-accent text-white font-bold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all">Ajouter</button>

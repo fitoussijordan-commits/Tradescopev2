@@ -11,7 +11,7 @@ export async function GET(request) {
   const accountId = searchParams.get('account_id');
   const isPayout = searchParams.get('is_payout');
 
-  let query = supabase.from('trades').select('*').eq('user_id', user.id).order('date', { ascending: false }).order('created_at', { ascending: false });
+  let query = supabase.from('trades').select('*, strategies(id, name, color)').eq('user_id', user.id).order('date', { ascending: false }).order('created_at', { ascending: false });
 
   if (accountId) query = query.eq('account_id', accountId);
   if (isPayout !== null) query = query.eq('is_payout', isPayout === 'true');
@@ -51,7 +51,8 @@ export async function POST(request) {
     notes: body.notes || null,
     is_payout: body.is_payout || false,
     session: body.session || null,
-  }).select().single();
+    strategy_id: body.strategy_id || null,
+  }).select('*, strategies(id, name, color)').single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
