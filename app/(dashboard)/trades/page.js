@@ -10,6 +10,8 @@ export default function TradesPage() {
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState('all');
   const [deleting, setDeleting] = useState(null);
+  const [editModal, setEditModal] = useState(null); // trade being edited
+  const [editForm, setEditForm] = useState({});
   const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], instrument: 'NQ', type: 'LONG', pnl: '', risk: '', size: '', trading_view_link: '', followed_strategy: false, notes: '', is_payout: false, session: '', balanceMode: false, balance: '', strategy_id: '' });
   const [strategies, setStrategies] = useState([]);
 
@@ -35,6 +37,34 @@ export default function TradesPage() {
     setTrades(t || []);
     setStrategies(s || []);
     setLoading(false);
+  };
+
+  const openEdit = (trade) => {
+    setEditForm({
+      date: trade.date,
+      instrument: trade.instrument || 'NQ',
+      type: trade.type || 'LONG',
+      pnl: trade.pnl,
+      risk: trade.risk || '',
+      size: trade.size || '',
+      trading_view_link: trade.trading_view_link || '',
+      followed_strategy: trade.followed_strategy || false,
+      notes: trade.notes || '',
+      session: trade.session || '',
+      strategy_id: trade.strategy_id || '',
+    });
+    setEditModal(trade);
+  };
+
+  const saveEdit = async (e) => {
+    e.preventDefault();
+    const res = await fetch('/api/trades', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: editModal.id, ...editForm, pnl: parseFloat(editForm.pnl), risk: parseFloat(editForm.risk) || null, size: parseFloat(editForm.size) || null }),
+    });
+    if (res.ok) { setEditModal(null); loadData(); }
+    else { const err = await res.json(); alert(err.error); }
   };
 
   const addTrade = async (e) => {
@@ -131,6 +161,7 @@ export default function TradesPage() {
               </div>
               <div className="flex items-center gap-2">
                 {t.trading_view_link && <a href={t.trading_view_link} target="_blank" rel="noopener" className="text-accent text-xs font-bold px-2 py-1 border border-accent/30 rounded">↗</a>}
+                <button onClick={() => openEdit(t)} className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-brd text-txt-2 hover:border-accent hover:text-accent transition-all">✎</button>
                 <button onClick={(e) => deleteTrade(e, t.id)} className={'px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 ' + (deleting === t.id ? 'bg-loss text-white' : 'text-txt-3 border border-brd')}>{deleting === t.id ? 'Confirmer ?' : '×'}</button>
               </div>
             </div>
@@ -212,6 +243,64 @@ export default function TradesPage() {
               <div className="flex gap-3 pt-2">
                 <button type="submit" className="flex-1 bg-accent text-white font-bold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all">Ajouter</button>
                 <button type="button" onClick={() => setShowModal(false)} className="px-6 py-3 border border-brd text-txt-2 rounded-lg text-sm active:scale-95">Annuler</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={() => setEditModal(null)}>
+          <div className="bg-bg-card border border-brd rounded-xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h2 className="font-display font-bold text-lg mb-5">Modifier le trade</h2>
+            <form onSubmit={saveEdit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Date</label>
+                  <input type="date" value={editForm.date} onChange={e => setEditForm({...editForm, date: e.target.value})} required className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">P&L (€)</label>
+                  <input type="number" step="0.01" value={editForm.pnl} onChange={e => setEditForm({...editForm, pnl: e.target.value})} required className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+              </div>
+              {!editModal.is_payout && (<>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Instrument</label>
+                    <select value={editForm.instrument} onChange={e => setEditForm({...editForm, instrument: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">
+                      {['NQ','ES','MNQ','MES','YM','RTY','CL','GC'].map(i => <option key={i}>{i}</option>)}
+                    </select></div>
+                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Type</label>
+                    <select value={editForm.type} onChange={e => setEditForm({...editForm, type: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">
+                      <option value="LONG">LONG</option><option value="SHORT">SHORT</option>
+                    </select></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Taille</label>
+                    <input type="number" step="0.01" value={editForm.size} onChange={e => setEditForm({...editForm, size: e.target.value})} placeholder="1.00" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Risque (€)</label>
+                    <input type="number" step="0.01" value={editForm.risk} onChange={e => setEditForm({...editForm, risk: e.target.value})} placeholder="250" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+                </div>
+                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Stratégie</label>
+                  <select value={editForm.strategy_id} onChange={e => setEditForm({...editForm, strategy_id: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">
+                    <option value="">Hors stratégie</option>
+                    {strategies.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select></div>
+                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Session</label>
+                  <div className="flex gap-2">
+                    {[['','Aucune'],['london','🇬🇧 Londres AM'],['us','🇺🇸 US PM']].map(([v,l]) => (
+                      <button key={v} type="button" onClick={() => setEditForm({...editForm, session: v})}
+                        className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${editForm.session === v ? 'bg-accent text-white' : 'bg-bg-secondary border border-brd text-txt-2 hover:border-accent'}`}>{l}</button>
+                    ))}
+                  </div></div>
+                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Lien TradingView</label>
+                  <input type="url" value={editForm.trading_view_link} onChange={e => setEditForm({...editForm, trading_view_link: e.target.value})} placeholder="https://..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+                <div className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border border-brd">
+                  <input type="checkbox" id="editStrat" checked={editForm.followed_strategy} onChange={e => setEditForm({...editForm, followed_strategy: e.target.checked})} className="accent-accent w-4 h-4" />
+                  <label htmlFor="editStrat" className="text-sm">Stratégie respectée</label>
+                </div>
+              </>)}
+              <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Notes</label>
+                <textarea value={editForm.notes} onChange={e => setEditForm({...editForm, notes: e.target.value})} rows="2" placeholder="Notes..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent resize-none" /></div>
+              <div className="flex gap-3 pt-2">
+                <button type="submit" className="flex-1 bg-accent text-white font-bold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all">Sauvegarder</button>
+                <button type="button" onClick={() => setEditModal(null)} className="px-6 py-3 border border-brd text-txt-2 rounded-lg text-sm">Annuler</button>
               </div>
             </form>
           </div>

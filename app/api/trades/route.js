@@ -71,3 +71,42 @@ export async function DELETE(request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }
+
+// PATCH: modifier un trade
+export async function PATCH(request) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+
+  const body = await request.json();
+  const { id, ...fields } = body;
+  if (!id) return NextResponse.json({ error: 'ID requis' }, { status: 400 });
+
+  let rr = fields.rr;
+  if (fields.risk && fields.risk > 0 && fields.pnl !== undefined) {
+    rr = fields.pnl / fields.risk;
+  }
+
+  const { data, error } = await supabase.from('trades')
+    .update({
+      date: fields.date,
+      instrument: fields.instrument,
+      type: fields.type,
+      pnl: fields.pnl,
+      risk: fields.risk || null,
+      rr,
+      size: fields.size || null,
+      trading_view_link: fields.trading_view_link || null,
+      followed_strategy: fields.followed_strategy ?? false,
+      notes: fields.notes || null,
+      session: fields.session || null,
+      strategy_id: fields.strategy_id || null,
+    })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select('*, strategies(id, name, color)')
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
+}
