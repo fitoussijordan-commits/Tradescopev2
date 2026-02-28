@@ -8,7 +8,7 @@ const PROMPTS = [
   { label: 'Meilleure stratégie', text: 'Quelle est ma stratégie la plus performante ? Pourquoi ? Que devrais-je faire pour maximiser mes résultats avec elle ?' },
   { label: 'Gestion du risque', text: 'Analyse ma gestion du risque. Mon R:R est-il cohérent ? Est-ce que je coupe mes pertes assez vite ? Que devrais-je améliorer ?' },
   { label: 'Patterns négatifs', text: 'Identifie mes patterns négatifs : jours difficiles, sessions où je perds, comportements récurrents qui me coûtent de l\'argent.' },
-  { label: 'Plan d\'action', text: 'Basé sur mes stats, crée-moi un plan d\'action pour les 30 prochains jours pour améliorer mon trading.' },
+  { label: 'Plan 30 jours', text: 'Basé sur mes stats, crée-moi un plan d\'action pour les 30 prochains jours pour améliorer mon trading.' },
 ];
 
 export default function AIAnalysisPage() {
@@ -19,16 +19,9 @@ export default function AIAnalysisPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [showKeyInput, setShowKeyInput] = useState(false);
   const messagesEndRef = useRef(null);
 
-  useEffect(() => {
-    loadData();
-    const saved = localStorage.getItem('ts-gemini-key');
-    if (saved) setApiKey(saved);
-    else setShowKeyInput(true);
-  }, [currentAccountId]);
+  useEffect(() => { loadData(); }, [currentAccountId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -48,11 +41,6 @@ export default function AIAnalysisPage() {
     setLoading(false);
   };
 
-  const saveKey = () => {
-    localStorage.setItem('ts-gemini-key', apiKey);
-    setShowKeyInput(false);
-  };
-
   const buildContext = () => {
     const at = trades.filter(t => t.account_id === currentAccountId);
     if (at.length === 0) return 'Aucun trade enregistré.';
@@ -67,7 +55,6 @@ export default function AIAnalysisPage() {
     const grossLoss = Math.abs(losses.reduce((s, t) => s + parseFloat(t.pnl), 0));
     const pf = grossLoss > 0 ? (grossWin / grossLoss).toFixed(2) : 'N/A';
 
-    // Stats par stratégie
     const stratStats = strategies.map(s => {
       const st = at.filter(t => t.strategy_id === s.id);
       if (st.length === 0) return null;
@@ -76,14 +63,12 @@ export default function AIAnalysisPage() {
       return `  - ${s.name}: ${st.length} trades, WR ${wr}%, P&L ${pnl}€`;
     }).filter(Boolean);
 
-    // Perf par jour
     const dayNames = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
     const dayPnl = {};
     dayNames.forEach(d => dayPnl[d] = 0);
     at.forEach(t => { const di = new Date(t.date).getDay(); dayPnl[dayNames[di === 0 ? 6 : di - 1]] += parseFloat(t.pnl); });
     const dayStats = Object.entries(dayPnl).filter(([,v]) => v !== 0).map(([d,v]) => `${d}: ${v >= 0 ? '+' : ''}${v.toFixed(0)}€`).join(', ');
 
-    // Sessions
     const london = at.filter(t => t.session === 'london');
     const us = at.filter(t => t.session === 'us');
     const londonWR = london.length > 0 ? ((london.filter(t => t.pnl > 0).length / london.length) * 100).toFixed(0) : 'N/A';
@@ -105,8 +90,7 @@ PAR STRATÉGIE:
 ${stratStats.length > 0 ? stratStats.join('\n') : '  Aucune stratégie définie'}
   - Hors stratégie: ${at.filter(t => !t.strategy_id).length} trades, P&L ${at.filter(t => !t.strategy_id).reduce((s,t) => s+parseFloat(t.pnl), 0).toFixed(2)}€
 
-PAR JOUR:
-${dayStats || 'Pas de données'}
+PAR JOUR: ${dayStats || 'Pas de données'}
 
 PAR SESSION:
 - Londres AM: ${london.length} trades, WR ${londonWR}%, P&L ${london.reduce((s,t) => s+parseFloat(t.pnl), 0).toFixed(2)}€
@@ -127,7 +111,6 @@ ${at.slice(0, 5).map(t => `  - ${t.date} | ${t.instrument} ${t.type} | P&L: ${pa
 
   const sendMessage = async (text) => {
     if (!text.trim() || thinking) return;
-    if (!apiKey) { setShowKeyInput(true); return; }
 
     const userMsg = { role: 'user', content: text };
     const newMessages = [...messages, userMsg];
@@ -135,34 +118,19 @@ ${at.slice(0, 5).map(t => `  - ${t.date} | ${t.instrument} ${t.type} | P&L: ${pa
     setInput('');
     setThinking(true);
 
-    const context = buildContext();
-    const systemPrompt = `Tu es un coach de trading expert qui analyse les performances d'un trader. Tu as accès à ses données réelles. Sois direct, précis et actionnable. Réponds en français. Utilise des données chiffrées de ses stats pour appuyer tes analyses. Formate ta réponse avec des sections claires.`;
-
-    const conversationHistory = newMessages.map(m => ({
-      role: m.role,
-      parts: [{ text: m.content }],
-    }));
-
-    // Inject context in first user message
-    if (conversationHistory.length === 1) {
-      conversationHistory[0].parts[0].text = `${systemPrompt}\n\nVoici mes données de trading:\n\n${context}\n\nMa question: ${text}`;
-    }
-
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+      const res = await fetch('/api/ai-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: conversationHistory }),
+        body: JSON.stringify({
+          messages: newMessages,
+          context: buildContext(),
+        }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || 'Erreur API Gemini');
-      }
-
       const data = await res.json();
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Pas de réponse.';
-      setMessages([...newMessages, { role: 'model', content: reply }]);
+      if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+      setMessages([...newMessages, { role: 'model', content: data.reply }]);
     } catch (err) {
       setMessages([...newMessages, { role: 'model', content: `❌ Erreur: ${err.message}` }]);
     } finally {
@@ -186,33 +154,15 @@ ${at.slice(0, 5).map(t => `  - ${t.date} | ${t.instrument} ${t.type} | P&L: ${pa
 
   return (
     <div className="animate-fade-up max-w-4xl flex flex-col h-[calc(100vh-160px)]">
-      {/* Header */}
       <div className="flex justify-between items-center mb-4 flex-shrink-0">
         <div>
           <h2 className="font-display font-bold text-xl flex items-center gap-2">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">✦</span> Analyse IA
           </h2>
-          <p className="text-txt-3 text-sm mt-0.5">Gemini analyse tes {atLen} trades et te coache</p>
+          <p className="text-txt-3 text-sm mt-0.5">L'IA analyse tes {atLen} trades et te coache</p>
         </div>
-        <button onClick={() => setShowKeyInput(!showKeyInput)} className="px-3 py-1.5 border border-brd text-txt-3 rounded-lg text-xs hover:border-accent hover:text-accent transition-all">
-          {apiKey ? '🔑 Clé configurée' : '🔑 Configurer clé'}
-        </button>
       </div>
 
-      {/* API Key config */}
-      {showKeyInput && (
-        <div className="bg-bg-card border border-accent/30 rounded-xl p-4 mb-4 flex-shrink-0">
-          <div className="text-sm font-semibold mb-2">Clé API Gemini</div>
-          <p className="text-txt-3 text-xs mb-3">Obtiens ta clé gratuite sur <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" className="text-accent underline">aistudio.google.com</a></p>
-          <div className="flex gap-2">
-            <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="AIza..." className="flex-1 bg-bg-secondary border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
-            <button onClick={saveKey} disabled={!apiKey} className="px-4 py-2 bg-accent text-white text-sm font-bold rounded-lg hover:opacity-90 disabled:opacity-40">Sauvegarder</button>
-          </div>
-          <p className="text-txt-3 text-[0.6rem] mt-2">La clé est stockée localement dans ton navigateur uniquement.</p>
-        </div>
-      )}
-
-      {/* Quick prompts */}
       {messages.length === 0 && (
         <div className="flex-shrink-0 mb-4">
           <p className="text-txt-3 text-xs mb-2 font-mono uppercase tracking-wider">Suggestions</p>
@@ -227,13 +177,12 @@ ${at.slice(0, 5).map(t => `  - ${t.date} | ${t.instrument} ${t.type} | P&L: ${pa
         </div>
       )}
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-4 mb-4 min-h-0">
         {messages.length === 0 && (
           <div className="text-center py-16 text-txt-3">
             <div className="text-4xl mb-3 opacity-30">✦</div>
             <p className="font-semibold">Pose une question sur tes trades</p>
-            <p className="text-xs mt-1">Gemini analysera tes données réelles pour te répondre</p>
+            <p className="text-xs mt-1">L'IA analysera tes données réelles pour te répondre</p>
           </div>
         )}
         {messages.map((m, i) => (
@@ -268,7 +217,6 @@ ${at.slice(0, 5).map(t => `  - ${t.date} | ${t.instrument} ${t.type} | P&L: ${pa
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <div className="flex-shrink-0">
         <div className="flex gap-2">
           <input
@@ -276,11 +224,11 @@ ${at.slice(0, 5).map(t => `  - ${t.date} | ${t.instrument} ${t.type} | P&L: ${pa
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
-            placeholder={apiKey ? "Pose une question sur tes performances..." : "Configure ta clé Gemini d'abord"}
-            disabled={!apiKey || thinking}
+            placeholder="Pose une question sur tes performances..."
+            disabled={thinking}
             className="flex-1 bg-bg-card border border-brd rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent disabled:opacity-50"
           />
-          <button onClick={() => sendMessage(input)} disabled={!input.trim() || !apiKey || thinking}
+          <button onClick={() => sendMessage(input)} disabled={!input.trim() || thinking}
             className="px-4 py-3 bg-accent text-white rounded-xl font-bold text-sm hover:opacity-90 disabled:opacity-40 transition-all">
             ↑
           </button>
