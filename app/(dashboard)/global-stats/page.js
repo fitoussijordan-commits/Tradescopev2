@@ -24,7 +24,10 @@ export default function GlobalStatsPage() {
   const at = trades.filter(t => !t.is_payout);
   const fmt = (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(v);
 
-  const totalCapital = accounts.reduce((s, a) => {
+  // Active accounts only (non-burned) for capital
+  const activeAccounts = accounts.filter(a => !a.is_burned);
+
+  const totalCapital = activeAccounts.reduce((s, a) => {
     const ap = trades.filter(t => t.account_id === a.id).reduce((s2, t) => s2 + parseFloat(t.pnl), 0);
     return s + parseFloat(a.base_capital) + ap;
   }, 0);
@@ -72,7 +75,7 @@ export default function GlobalStatsPage() {
       {/* Global metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
         {[
-          { label: 'Capital Total', value: fmt(totalCapital), sub: `${accounts.length} compte${accounts.length > 1 ? 's' : ''}`, color: 'text-txt-1' },
+          { label: 'Capital Total', value: fmt(totalCapital), sub: `${activeAccounts.length} compte${activeAccounts.length > 1 ? 's' : ''} actif${activeAccounts.length > 1 ? 's' : ''}`, color: 'text-txt-1' },
           { label: 'P&L Total', value: fmt(totalPnl), sub: `${at.length} trades`, color: totalPnl >= 0 ? 'text-profit' : 'text-loss' },
           { label: 'Win Rate', value: `${winRate}%`, sub: `${wins}W / ${losses}L`, color: winRate >= 50 ? 'text-profit' : 'text-loss' },
           { label: 'R:R Moyen', value: avgRR ? `${avgRR}R` : '—', sub: `${rrTrades.length} trades`, color: avgRR >= 0 ? 'text-profit' : 'text-loss' },
@@ -87,14 +90,14 @@ export default function GlobalStatsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Global Equity Curve */}
+        {/* Global Equity Curve - active accounts only */}
         <div className="bg-bg-card border border-brd rounded-xl p-5 lg:col-span-2">
           <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-3">Courbe de Progression Globale</h3>
-          <EquityCurve trades={at} baseCapital={accounts.reduce((s, a) => s + parseFloat(a.base_capital), 0)} height={220} />
+          <EquityCurve trades={at.filter(t => activeAccounts.some(a => a.id === t.account_id))} baseCapital={activeAccounts.reduce((s, a) => s + parseFloat(a.base_capital), 0)} height={220} />
         </div>
 
-        {/* Per-account equity curves */}
-        {accounts.length > 1 && accounts.map(a => {
+        {/* Per-account equity curves - active only */}
+        {activeAccounts.length > 1 && activeAccounts.map(a => {
           const accTrades = at.filter(t => t.account_id === a.id);
           if (accTrades.length < 2) return null;
           return (
