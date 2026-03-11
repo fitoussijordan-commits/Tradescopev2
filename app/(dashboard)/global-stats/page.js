@@ -24,7 +24,7 @@ export default function GlobalStatsPage() {
   const at = trades.filter(t => !t.is_payout);
   const fmt = (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(v);
 
-  // Active accounts only (non-burned) for capital
+  // Active accounts (non-burned) for capital + curves
   const activeAccounts = accounts.filter(a => !a.is_burned);
 
   const totalCapital = activeAccounts.reduce((s, a) => {

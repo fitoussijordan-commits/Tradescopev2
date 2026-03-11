@@ -12,6 +12,8 @@ const menuItems = [
     { path: '/payouts', icon: '◇', name: 'Payouts' },
     { path: '/statistics', icon: '△', name: 'Stats Compte' },
     { path: '/global-stats', icon: '◎', name: 'Stats Globales', requiredPlan: ['pro', 'unlimited'] },
+    { path: '/strategies', icon: '◬', name: 'Stratégies' },
+    { path: '/ai-analysis', icon: '✦', name: 'Analyse IA' },
   ]},
   { label: 'Outils', items: [
     { path: '/playbook', icon: '▦', name: 'Playbook', requiredPlan: ['pro', 'unlimited'] },
@@ -75,7 +77,6 @@ function MobileAccountSelector() {
 function IOSInstallBanner() {
   const [show, setShow] = useState(false);
   useEffect(() => {
-    // Show only on iOS Safari, not already in PWA, and not dismissed
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isStandalone = window.navigator.standalone === true;
     const dismissed = localStorage.getItem('ts-pwa-dismissed');
@@ -95,6 +96,40 @@ function IOSInstallBanner() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function TrialBanner({ profile }) {
+  if (!profile?.trial_ends_at || profile?.subscription_status !== 'trialing') return null;
+
+  const trialEnd = new Date(profile.trial_ends_at);
+  const now = new Date();
+  const daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
+  const totalDays = 7;
+  const daysPassed = Math.max(totalDays - daysLeft, 0);
+  const progress = Math.min((daysPassed / totalDays) * 100, 100);
+
+  if (daysLeft <= 0) return null;
+  const isUrgent = daysLeft <= 2;
+
+  return (
+    <div className={`px-3 md:px-7 py-2 border-b flex items-center justify-between gap-3 text-xs ${
+      isUrgent ? 'bg-loss-dim border-loss/30 text-loss' : 'bg-accent-dim border-accent/20 text-accent'
+    }`}>
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="flex-shrink-0 font-bold font-mono">
+          {isUrgent ? '⚠' : '⏱'} Jour {daysPassed}/{totalDays} — {daysLeft} jour{daysLeft > 1 ? 's' : ''} restant{daysLeft > 1 ? 's' : ''}
+        </span>
+        <div className="hidden sm:flex items-center gap-2">
+          <div className="w-32 h-1.5 bg-black/20 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full ${isUrgent ? 'bg-loss' : 'bg-accent'}`} style={{ width: `${progress}%` }} />
+          </div>
+        </div>
+      </div>
+      <Link href="/account" className={`flex-shrink-0 font-bold px-3 py-1 rounded-lg text-white text-xs transition-all ${isUrgent ? 'bg-loss hover:opacity-90' : 'bg-accent hover:opacity-90'}`}>
+        Choisir un plan →
+      </Link>
     </div>
   );
 }
@@ -141,7 +176,11 @@ function ShellInner({ user, profile, children }) {
             <div key={section.label} className="mb-5">
               <div className="text-[0.62rem] text-txt-3 uppercase tracking-[1.5px] font-semibold font-mono px-3 mb-1.5">{section.label}</div>
               {section.items.map((item) => {
-                const locked = item.requiredPlan && !item.requiredPlan.includes(profile?.plan);
+                const isTrialing = profile?.subscription_status === 'trialing' &&
+                                   profile?.trial_ends_at &&
+                                   new Date(profile.trial_ends_at) > new Date();
+                const effectivePlan = (isTrialing || profile?.subscription_status === 'active') ? profile?.plan : 'none';
+                const locked = item.requiredPlan && !item.requiredPlan.includes(effectivePlan);
                 const active = pathname === item.path;
                 return (
                   <Link key={item.path} href={locked ? '/account' : item.path} onClick={() => setMobileOpen(false)}
@@ -220,6 +259,8 @@ function ShellInner({ user, profile, children }) {
             </div>
           </div>
         </div>
+
+        <TrialBanner profile={profile} />
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-6">
           {children}
