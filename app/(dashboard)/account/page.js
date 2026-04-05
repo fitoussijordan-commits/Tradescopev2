@@ -11,6 +11,12 @@ export default function AccountPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newAccount, setNewAccount] = useState({ name: '', prop_firm: '', base_capital: '' });
 
+  // Promo code state
+  const [promoInput, setPromoInput] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoData, setPromoData] = useState(null); // { code, discount_percent, applicable_plans }
+  const [promoError, setPromoError] = useState('');
+
   useEffect(() => {
     loadData();
   }, []);
@@ -22,7 +28,7 @@ export default function AccountPage() {
 
     const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
     const { data: a } = await supabase.from('trading_accounts').select('*').eq('user_id', user.id).order('created_at');
-    
+
     setProfile(p);
     setAccounts(a || []);
     setLoading(false);
@@ -40,7 +46,7 @@ export default function AccountPage() {
       setAccounts([...accounts, data]);
       setNewAccount({ name: '', prop_firm: '', base_capital: '' });
       setShowAddForm(false);
-      router.refresh(); // Force re-render du layout pour mettre à jour le sélecteur de compte
+      router.refresh();
     } else {
       alert(data.error);
     }
@@ -95,6 +101,55 @@ export default function AccountPage() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [paypalReady, setPaypalReady] = useState(false);
 
+  // Validate promo code
+  const validatePromo = async () => {
+    if (!promoInput.trim()) return;
+    setPromoLoading(true);
+    setPromoError('');
+    setPromoData(null);
+
+    try {
+      const res = await fetch('/api/promo/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoInput, plan: selectedPlan }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.valid) {
+        setPromoData(data);
+        setPromoError('');
+      } else {
+        setPromoError(data.error || 'Code invalide');
+        setPromoData(null);
+      }
+    } catch (err) {
+      setPromoError('Erreur de connexion');
+    }
+    setPromoLoading(false);
+  };
+
+  const removePromo = () => {
+    setPromoData(null);
+    setPromoInput('');
+    setPromoError('');
+  };
+
+  // Prices
+  const basePrices = { starter: 4.99, pro: 9.99, unlimited: 19.99 };
+  const discountedPrices = { pro: 7.99, unlimited: 15.99 };
+
+  const getDisplayPrice = (planKey) => {
+    if (promoData && promoData.applicable_plans.includes(planKey)) {
+      return discountedPrices[planKey] || basePrices[planKey];
+    }
+    return basePrices[planKey];
+  };
+
+  const hasDiscount = (planKey) => {
+    return promoData && promoData.applicable_plans.includes(planKey);
+  };
+
   // Load PayPal plans + SDK
   const loadPayPalPlans = async () => {
     if (paypalPlans) return;
@@ -110,8 +165,7 @@ export default function AccountPage() {
   // Load PayPal SDK once
   useEffect(() => {
     if (!selectedPlan || !paypalPlans) return;
-    
-    // Already loaded
+
     if (window.paypal) {
       setPaypalReady(true);
       return;
@@ -119,7 +173,6 @@ export default function AccountPage() {
 
     const existing = document.getElementById('paypal-sdk');
     if (existing) {
-      // Wait for it to load
       existing.addEventListener('load', () => setPaypalReady(true));
       return;
     }
@@ -134,7 +187,7 @@ export default function AccountPage() {
     document.head.appendChild(script);
   }, [selectedPlan, paypalPlans]);
 
-  // Render PayPal buttons when ready or plan changes
+  // Render PayPal buttons when ready or plan/promo changes
   useEffect(() => {
     if (!paypalReady || !selectedPlan || !paypalPlans || !window.paypal) return;
 
@@ -142,7 +195,17 @@ export default function AccountPage() {
     if (!container) return;
     container.innerHTML = '';
 
-    const planId = paypalPlans[selectedPlan];
+    // Déterminer quel plan PayPal utiliser (standard ou promo)
+    let planId;
+    if (promoData && promoData.applicable_plans.includes(selectedPlan)) {
+      // Utiliser le plan promo (ex: pro_welcome20, unlimited_welcome20)
+      const promoKey = `${selectedPlan}_welcome20`;
+      planId = paypalPlans[promoKey];
+    }
+    // Fallback sur le plan standard
+    if (!planId) {
+      planId = paypalPlans[selectedPlan];
+    }
     if (!planId) return;
 
     try {
@@ -157,7 +220,11 @@ export default function AccountPage() {
             const res = await fetch('/api/paypal/subscribe', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ subscriptionId: data.subscriptionID, plan: selectedPlan }),
+              body: JSON.stringify({
+                subscriptionId: data.subscriptionID,
+                plan: selectedPlan,
+                promoCode: promoData?.code || null,
+              }),
             });
             if (res.ok) {
               window.location.href = '/dashboard?checkout=success';
@@ -180,18 +247,96 @@ export default function AccountPage() {
     } catch (err) {
       console.error('PayPal render error:', err);
     }
-  }, [paypalReady, selectedPlan, paypalPlans]);
+  }, [paypalReady, selectedPlan, paypalPlans, promoData]);
 
   if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
 
   const hasSubscription = profile?.subscription_status === 'active' || profile?.subscription_status === 'trialing';
+
+  // Plan cards data
+  const planCards = [
+    { key: 'starter', name: 'Starter', price: '4,99€', desc: '1 compte' },
+    { key: 'pro', name: 'Pro', price: '9,99€', desc: '3 comptes', popular: true },
+    { key: 'unlimited', name: 'Unlimited', price: '19,99€', desc: 'Illimité' },
+  ];
+
+  const formatPrice = (price) => price.toFixed(2).replace('.', ',') + '€';
+
+  const renderPlanCard = (p) => (
+    <button key={p.key} onClick={() => { setSelectedPlan(p.key); loadPayPalPlans(); }} disabled={planLoading !== null}
+      className={`p-4 rounded-xl border text-left transition-all active:scale-95 ${planLoading === p.key ? 'opacity-60' : 'hover:-translate-y-0.5'} ${selectedPlan === p.key ? 'border-accent bg-accent-dim ring-2 ring-accent/30' : p.popular ? 'border-accent/40 bg-accent-dim/50' : 'border-brd hover:border-brd-hover'}`}>
+      <div className="font-display font-bold">{p.name}</div>
+      <div className="text-xl font-bold font-display">
+        {hasDiscount(p.key) ? (
+          <>
+            <span className="line-through text-txt-3 text-sm mr-1">{p.price}</span>
+            <span className="text-profit">{formatPrice(getDisplayPrice(p.key))}</span>
+          </>
+        ) : (
+          p.price
+        )}
+        <span className="text-txt-2 text-xs">/mois</span>
+      </div>
+      <div className="text-txt-2 text-xs mt-1">{p.desc}{!hasSubscription && ' · 7j essai gratuit'}</div>
+      {hasDiscount(p.key) && (
+        <div className="text-profit text-xs font-bold mt-1">-{promoData.discount_percent}% appliqué</div>
+      )}
+      {selectedPlan === p.key && <div className="text-accent text-xs font-bold mt-2">✓ Sélectionné</div>}
+    </button>
+  );
+
+  const renderPromoSection = () => (
+    <div className="mb-4">
+      {promoData ? (
+        <div className="flex items-center gap-2 px-3 py-2 bg-profit/10 border border-profit/30 rounded-lg">
+          <span className="text-profit text-sm font-bold">✓ Code {promoData.code} appliqué (-{promoData.discount_percent}%)</span>
+          <button onClick={removePromo} className="ml-auto text-txt-3 hover:text-txt-1 text-xs font-bold">✕ Retirer</button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Code promo"
+            value={promoInput}
+            onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoError(''); }}
+            onKeyDown={(e) => e.key === 'Enter' && validatePromo()}
+            className="flex-1 bg-bg-secondary border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent font-mono uppercase placeholder:normal-case placeholder:font-sans"
+          />
+          <button
+            onClick={validatePromo}
+            disabled={promoLoading || !promoInput.trim()}
+            className="px-4 py-2 bg-bg-secondary border border-brd text-txt-1 text-sm font-semibold rounded-lg hover:border-accent transition-all disabled:opacity-50"
+          >
+            {promoLoading ? '...' : 'Appliquer'}
+          </button>
+        </div>
+      )}
+      {promoError && <p className="text-loss text-xs mt-1.5">{promoError}</p>}
+    </div>
+  );
+
+  const renderPayPalSection = () => (
+    selectedPlan && (
+      <div className="border border-brd rounded-xl p-5 bg-bg-secondary">
+        <p className="text-sm text-txt-2 mb-3 text-center">Finalise ton abonnement avec PayPal :</p>
+        {promoData && hasDiscount(selectedPlan) && (
+          <p className="text-center text-profit text-xs font-bold mb-3">
+            Prix avec promo : {formatPrice(getDisplayPrice(selectedPlan))}/mois au lieu de {formatPrice(basePrices[selectedPlan])}/mois
+          </p>
+        )}
+        <div id="paypal-button-container" className="max-w-sm mx-auto min-h-[50px]">
+          {!paypalReady && <div className="text-center text-txt-3 text-sm py-4">Chargement PayPal...</div>}
+        </div>
+      </div>
+    )
+  );
 
   return (
     <div className="max-w-3xl mx-auto animate-fade-up">
       {/* Subscription */}
       <div className="bg-bg-card border border-brd rounded-xl p-6 mb-6">
         <h2 className="font-display font-bold text-lg mb-4">Mon Abonnement</h2>
-        
+
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-brd">
           <div>
             <div className="text-sm text-txt-2">Plan actuel</div>
@@ -203,6 +348,9 @@ export default function AccountPage() {
               {profile?.subscription_status === 'canceled' && '✗ Annulé'}
               {profile?.subscription_status === 'inactive' && '✗ Inactif'}
             </div>
+            {profile?.promo_code && hasSubscription && (
+              <div className="text-xs text-profit font-mono mt-1">Promo : {profile.promo_code}</div>
+            )}
           </div>
           {hasSubscription && (
             <button onClick={cancelSubscription} className="px-4 py-2 text-sm font-semibold border border-loss text-loss rounded-lg hover:bg-loss-dim transition-all">
@@ -214,59 +362,22 @@ export default function AccountPage() {
         {profile?.subscription_status === 'trialing' && (
           <div>
             <p className="text-txt-2 text-sm mb-4">Choisis ton plan avant la fin de ton essai :</p>
+            {renderPromoSection()}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-              {[
-                { key: 'starter', name: 'Starter', price: '4,99€', desc: '1 compte' },
-                { key: 'pro', name: 'Pro', price: '9,99€', desc: '3 comptes', popular: true },
-                { key: 'unlimited', name: 'Unlimited', price: '19,99€', desc: 'Illimité' },
-              ].map(p => (
-                <button key={p.key} onClick={() => { setSelectedPlan(p.key); loadPayPalPlans(); }} disabled={planLoading !== null}
-                  className={`p-4 rounded-xl border text-left transition-all active:scale-95 ${planLoading === p.key ? 'opacity-60' : 'hover:-translate-y-0.5'} ${selectedPlan === p.key ? 'border-accent bg-accent-dim ring-2 ring-accent/30' : p.popular ? 'border-accent/40 bg-accent-dim/50' : 'border-brd hover:border-brd-hover'}`}>
-                  <div className="font-display font-bold">{p.name}</div>
-                  <div className="text-xl font-bold font-display">{p.price}<span className="text-txt-2 text-xs">/mois</span></div>
-                  <div className="text-txt-2 text-xs mt-1">{p.desc}</div>
-                  {selectedPlan === p.key && <div className="text-accent text-xs font-bold mt-2">✓ Sélectionné</div>}
-                </button>
-              ))}
+              {planCards.map(renderPlanCard)}
             </div>
-            {selectedPlan && (
-              <div className="border border-brd rounded-xl p-5 bg-bg-secondary">
-                <p className="text-sm text-txt-2 mb-3 text-center">Finalise ton abonnement avec PayPal :</p>
-                <div id="paypal-button-container" className="max-w-sm mx-auto min-h-[50px]">
-                  {!paypalReady && <div className="text-center text-txt-3 text-sm py-4">Chargement PayPal...</div>}
-                </div>
-              </div>
-            )}
+            {renderPayPalSection()}
           </div>
         )}
 
         {!hasSubscription && (
           <div>
             <p className="text-txt-2 text-sm mb-4">Choisis un plan pour accéder à TradeScope :</p>
+            {renderPromoSection()}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-              {[
-                { key: 'starter', name: 'Starter', price: '4,99€', desc: '1 compte' },
-                { key: 'pro', name: 'Pro', price: '9,99€', desc: '3 comptes', popular: true },
-                { key: 'unlimited', name: 'Unlimited', price: '19,99€', desc: 'Illimité' },
-              ].map(p => (
-                <button key={p.key} onClick={() => { setSelectedPlan(p.key); loadPayPalPlans(); }} disabled={planLoading !== null}
-                  className={`p-4 rounded-xl border text-left transition-all active:scale-95 ${planLoading === p.key ? 'opacity-60' : 'hover:-translate-y-0.5'} ${selectedPlan === p.key ? 'border-accent bg-accent-dim ring-2 ring-accent/30' : p.popular ? 'border-accent/40 bg-accent-dim/50' : 'border-brd hover:border-brd-hover'}`}>
-                  <div className="font-display font-bold">{p.name}</div>
-                  <div className="text-xl font-bold font-display">{p.price}<span className="text-txt-2 text-xs">/mois</span></div>
-                  <div className="text-txt-2 text-xs mt-1">{p.desc} · 7j essai gratuit</div>
-                  {selectedPlan === p.key && <div className="text-accent text-xs font-bold mt-2">✓ Sélectionné</div>}
-                </button>
-              ))}
+              {planCards.map(renderPlanCard)}
             </div>
-
-            {selectedPlan && (
-              <div className="border border-brd rounded-xl p-5 bg-bg-secondary">
-                <p className="text-sm text-txt-2 mb-3 text-center">Finalise ton abonnement avec PayPal :</p>
-                <div id="paypal-button-container" className="max-w-sm mx-auto min-h-[50px]">
-                  {!paypalReady && <div className="text-center text-txt-3 text-sm py-4">Chargement PayPal...</div>}
-                </div>
-              </div>
-            )}
+            {renderPayPalSection()}
           </div>
         )}
       </div>
