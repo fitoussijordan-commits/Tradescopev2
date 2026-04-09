@@ -203,22 +203,22 @@ export default function AccountPage() {
     try {
       window.paypal.Buttons({
         style: { shape: 'rect', color: 'blue', layout: 'vertical', label: 'subscribe' },
-        createSubscription: function(data, actions) {
-          const subConfig = { plan_id: planId };
-          // Override prix via PayPal si promo (seulement le cycle REGULAR, sequence 2)
+        createSubscription: async function(data, actions) {
+          // Si promo active, créer la souscription côté serveur (l'API REST supporte le price override)
           if (applyDiscount && discountedPrice) {
-            subConfig.plan = {
-              billing_cycles: [
-                {
-                  sequence: 2,
-                  pricing_scheme: {
-                    fixed_price: { value: discountedPrice, currency_code: 'EUR' }
-                  }
-                }
-              ]
-            };
+            const res = await fetch('/api/paypal/create-subscription', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ planId, discountedPrice }),
+            });
+            const result = await res.json();
+            if (!res.ok || !result.subscriptionId) {
+              throw new Error(result.error || 'Erreur création souscription');
+            }
+            return result.subscriptionId;
           }
-          return actions.subscription.create(subConfig);
+          // Sans promo, création normale côté client
+          return actions.subscription.create({ plan_id: planId });
         },
         onApprove: async function(data) {
           setPlanLoading(selectedPlan);
