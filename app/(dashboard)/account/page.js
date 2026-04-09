@@ -205,15 +205,17 @@ export default function AccountPage() {
         style: { shape: 'rect', color: 'blue', layout: 'vertical', label: 'subscribe' },
         createSubscription: function(data, actions) {
           const subConfig = { plan_id: planId };
-          // Override prix via PayPal si promo
+          // Override prix via PayPal si promo (seulement le cycle REGULAR, sequence 2)
           if (applyDiscount && discountedPrice) {
             subConfig.plan = {
-              billing_cycles: [{
-                sequence: 2,
-                pricing_scheme: {
-                  fixed_price: { value: discountedPrice, currency_code: 'EUR' }
+              billing_cycles: [
+                {
+                  sequence: 2,
+                  pricing_scheme: {
+                    fixed_price: { value: discountedPrice, currency_code: 'EUR' }
+                  }
                 }
-              }]
+              ]
             };
           }
           return actions.subscription.create(subConfig);
