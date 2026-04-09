@@ -178,7 +178,7 @@ export default function AccountPage() {
     setPaypalReady(false);
     const script = document.createElement('script');
     script.id = 'paypal-sdk';
-    script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&vault=true&intent=subscription&currency=EUR`;
+    script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&vault=true&intent=subscription&currency=EUR&locale=fr_FR`;
     script.addEventListener('load', () => {
       setPaypalReady(true);
     });
