@@ -54,7 +54,7 @@ function ThemeToggle() {
 function AccountSelector() {
   const { accounts, currentAccountId, selectAccount } = useAccount();
   const activeAccounts = (accounts || []).filter(a => !a.is_burned);
-  if (activeAccounts.length <= 1) return null;
+  if (activeAccounts.length === 0) return null;
   return (
     <select value={currentAccountId || ''} onChange={e => selectAccount(e.target.value)}
       className="hidden md:block bg-accent-dim border border-accent/15 rounded-full px-3 py-1.5 text-[0.82rem] font-bold focus:outline-none focus:border-accent cursor-pointer">
@@ -66,7 +66,7 @@ function AccountSelector() {
 function MobileAccountSelector() {
   const { accounts, currentAccountId, selectAccount } = useAccount();
   const activeAccounts = (accounts || []).filter(a => !a.is_burned);
-  if (activeAccounts.length <= 1) return null;
+  if (activeAccounts.length === 0) return null;
   return (
     <select value={currentAccountId || ''} onChange={e => selectAccount(e.target.value)}
       className="md:hidden bg-accent-dim border border-accent/15 rounded-lg px-2 py-1.5 text-[0.75rem] font-bold focus:outline-none focus:border-accent max-w-[140px] truncate">
