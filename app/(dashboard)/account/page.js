@@ -14,7 +14,7 @@ export default function AccountPage() {
   // Promo code state
   const [promoInput, setPromoInput] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
-  const [promoData, setPromoData] = useState(null); // { code, discount_percent, applicable_plans }
+  const [promoData, setPromoData] = useState(null);
   const [promoError, setPromoError] = useState('');
 
   useEffect(() => {
@@ -101,13 +101,29 @@ export default function AccountPage() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [paypalReady, setPaypalReady] = useState(false);
 
+  // Promo: prix de base et calcul réduction
+  const basePrices = { starter: 4.99, pro: 9.99, unlimited: 19.99 };
+
+  const getDiscountedPrice = (planKey) => {
+    if (promoData && promoData.applicable_plans.includes(planKey)) {
+      const base = basePrices[planKey];
+      return Math.round(base * (1 - promoData.discount_percent / 100) * 100) / 100;
+    }
+    return basePrices[planKey];
+  };
+
+  const hasDiscount = (planKey) => {
+    return promoData && promoData.applicable_plans.includes(planKey);
+  };
+
+  const formatPrice = (price) => price.toFixed(2).replace('.', ',') + '€';
+
   // Validate promo code
   const validatePromo = async () => {
     if (!promoInput.trim()) return;
     setPromoLoading(true);
     setPromoError('');
     setPromoData(null);
-
     try {
       const res = await fetch('/api/promo/validate', {
         method: 'POST',
@@ -115,13 +131,10 @@ export default function AccountPage() {
         body: JSON.stringify({ code: promoInput, plan: selectedPlan }),
       });
       const data = await res.json();
-
       if (res.ok && data.valid) {
         setPromoData(data);
-        setPromoError('');
       } else {
         setPromoError(data.error || 'Code invalide');
-        setPromoData(null);
       }
     } catch (err) {
       setPromoError('Erreur de connexion');
@@ -133,21 +146,6 @@ export default function AccountPage() {
     setPromoData(null);
     setPromoInput('');
     setPromoError('');
-  };
-
-  // Prices
-  const basePrices = { starter: 4.99, pro: 9.99, unlimited: 19.99 };
-  const discountedPrices = { pro: 7.99, unlimited: 15.99 };
-
-  const getDisplayPrice = (planKey) => {
-    if (promoData && promoData.applicable_plans.includes(planKey)) {
-      return discountedPrices[planKey] || basePrices[planKey];
-    }
-    return basePrices[planKey];
-  };
-
-  const hasDiscount = (planKey) => {
-    return promoData && promoData.applicable_plans.includes(planKey);
   };
 
   // Load PayPal plans + SDK
@@ -187,7 +185,7 @@ export default function AccountPage() {
     document.head.appendChild(script);
   }, [selectedPlan, paypalPlans]);
 
-  // Render PayPal buttons when ready or plan/promo changes
+  // Render PayPal buttons when ready or plan changes
   useEffect(() => {
     if (!paypalReady || !selectedPlan || !paypalPlans || !window.paypal) return;
 
@@ -195,24 +193,30 @@ export default function AccountPage() {
     if (!container) return;
     container.innerHTML = '';
 
-    // Déterminer quel plan PayPal utiliser (standard ou promo)
-    let planId;
-    if (promoData && promoData.applicable_plans.includes(selectedPlan)) {
-      // Utiliser le plan promo (ex: pro_welcome20, unlimited_welcome20)
-      const promoKey = `${selectedPlan}_welcome20`;
-      planId = paypalPlans[promoKey];
-    }
-    // Fallback sur le plan standard
-    if (!planId) {
-      planId = paypalPlans[selectedPlan];
-    }
+    const planId = paypalPlans[selectedPlan];
     if (!planId) return;
+
+    // Si promo active sur ce plan, override le prix
+    const applyDiscount = hasDiscount(selectedPlan);
+    const discountedPrice = applyDiscount ? getDiscountedPrice(selectedPlan).toFixed(2) : null;
 
     try {
       window.paypal.Buttons({
         style: { shape: 'rect', color: 'blue', layout: 'vertical', label: 'subscribe' },
         createSubscription: function(data, actions) {
-          return actions.subscription.create({ plan_id: planId });
+          const subConfig = { plan_id: planId };
+          // Override prix via PayPal si promo
+          if (applyDiscount && discountedPrice) {
+            subConfig.plan = {
+              billing_cycles: [{
+                sequence: 2,
+                pricing_scheme: {
+                  fixed_price: { value: discountedPrice, currency_code: 'EUR' }
+                }
+              }]
+            };
+          }
+          return actions.subscription.create(subConfig);
         },
         onApprove: async function(data) {
           setPlanLoading(selectedPlan);
@@ -253,14 +257,11 @@ export default function AccountPage() {
 
   const hasSubscription = profile?.subscription_status === 'active' || profile?.subscription_status === 'trialing';
 
-  // Plan cards data
   const planCards = [
     { key: 'starter', name: 'Starter', price: '4,99€', desc: '1 compte' },
     { key: 'pro', name: 'Pro', price: '9,99€', desc: '3 comptes', popular: true },
     { key: 'unlimited', name: 'Unlimited', price: '19,99€', desc: 'Illimité' },
   ];
-
-  const formatPrice = (price) => price.toFixed(2).replace('.', ',') + '€';
 
   const renderPlanCard = (p) => (
     <button key={p.key} onClick={() => { setSelectedPlan(p.key); loadPayPalPlans(); }} disabled={planLoading !== null}
@@ -270,7 +271,7 @@ export default function AccountPage() {
         {hasDiscount(p.key) ? (
           <>
             <span className="line-through text-txt-3 text-sm mr-1">{p.price}</span>
-            <span className="text-profit">{formatPrice(getDisplayPrice(p.key))}</span>
+            <span className="text-profit">{formatPrice(getDiscountedPrice(p.key))}</span>
           </>
         ) : (
           p.price
@@ -319,9 +320,9 @@ export default function AccountPage() {
     selectedPlan && (
       <div className="border border-brd rounded-xl p-5 bg-bg-secondary">
         <p className="text-sm text-txt-2 mb-3 text-center">Finalise ton abonnement avec PayPal :</p>
-        {promoData && hasDiscount(selectedPlan) && (
+        {hasDiscount(selectedPlan) && (
           <p className="text-center text-profit text-xs font-bold mb-3">
-            Prix avec promo : {formatPrice(getDisplayPrice(selectedPlan))}/mois au lieu de {formatPrice(basePrices[selectedPlan])}/mois
+            Prix avec promo : {formatPrice(getDiscountedPrice(selectedPlan))}/mois au lieu de {formatPrice(basePrices[selectedPlan])}/mois
           </p>
         )}
         <div id="paypal-button-container" className="max-w-sm mx-auto min-h-[50px]">

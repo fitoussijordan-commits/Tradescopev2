@@ -11,12 +11,7 @@ export async function GET() {
     }
     return NextResponse.json(cachedPlans);
   } catch (error) {
-    console.error('PayPal plans FULL error:', JSON.stringify({
-      message: error.message,
-      stack: error.stack,
-    }));
-    // Reset cache so next call retries
-    cachedPlans = null;
+    console.error('PayPal plans error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
