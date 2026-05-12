@@ -38,11 +38,14 @@ export function AccountProvider({ accounts: serverAccounts, children }) {
   }, []);
 
   useEffect(() => {
+    const activeAccounts = accounts.filter(a => !a.is_burned);
     const saved = localStorage.getItem('ts-current-account');
-    if (saved && accounts.find(a => a.id === saved)) {
+    if (saved && accounts.find(a => a.id === saved && !a.is_burned)) {
       setCurrentAccountId(saved);
-    } else if (accounts.length > 0) {
-      setCurrentAccountId(accounts[0].id);
+    } else if (activeAccounts.length > 0) {
+      setCurrentAccountId(activeAccounts[0].id);
+    } else {
+      setCurrentAccountId(null);
     }
   }, [accounts]);
 
@@ -51,7 +54,8 @@ export function AccountProvider({ accounts: serverAccounts, children }) {
     localStorage.setItem('ts-current-account', id);
   };
 
-  const currentAccount = accounts.find(a => a.id === currentAccountId) || accounts[0] || null;
+  const activeAccounts = accounts.filter(a => !a.is_burned);
+  const currentAccount = activeAccounts.find(a => a.id === currentAccountId) || null;
 
   return (
     <AccountContext.Provider value={{ accounts, currentAccount, currentAccountId, selectAccount }}>
