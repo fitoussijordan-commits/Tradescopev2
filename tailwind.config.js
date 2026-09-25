@@ -15,16 +15,18 @@ module.exports = {
         },
         sidebar: 'var(--sidebar)',
         accent: {
-          DEFAULT: 'var(--accent)',
+          DEFAULT: 'rgb(var(--accent-rgb) / <alpha-value>)',
           dim: 'var(--accent-dim)',
           glow: 'var(--accent-glow)',
+          strong: 'var(--accent-strong)',
         },
+        warn: 'rgb(var(--warn-rgb) / <alpha-value>)',
         profit: {
-          DEFAULT: 'var(--profit)',
+          DEFAULT: 'rgb(var(--profit-rgb) / <alpha-value>)',
           dim: 'var(--profit-dim)',
         },
         loss: {
-          DEFAULT: 'var(--loss)',
+          DEFAULT: 'rgb(var(--loss-rgb) / <alpha-value>)',
           dim: 'var(--loss-dim)',
         },
         txt: {
@@ -38,9 +40,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ['Instrument Sans', 'sans-serif'],
-        body: ['DM Sans', 'sans-serif'],
-        mono: ['Space Mono', 'monospace'],
+        display: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        body: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
     },
   },

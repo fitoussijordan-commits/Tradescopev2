@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
+import { PageLoader } from '@/components/Brand';
 
 export default function PlaybookPage() {
   const [rules, setRules] = useState([]);
@@ -62,24 +63,24 @@ export default function PlaybookPage() {
   const checkedCount = rules.filter(r => isChecked(r.id)).length;
   const completionPct = rules.length > 0 ? ((checkedCount / rules.length) * 100).toFixed(0) : 0;
 
-  if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
+  if (loading) return <PageLoader />;
 
   return (
     <div className="max-w-2xl mx-auto animate-fade-up">
       {/* Daily progress */}
-      <div className="bg-bg-card border border-brd rounded-xl p-6 mb-5">
+      <div className="card p-6 mb-5">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h2 className="font-display font-bold text-lg">Checklist du jour</h2>
+            <h2 className="font-display font-semibold text-lg">Checklist du jour</h2>
             <p className="text-txt-2 text-sm">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
-          <div className={`text-3xl font-bold font-display ${completionPct == 100 ? 'text-profit' : completionPct >= 50 ? 'text-amber-400' : 'text-loss'}`}>
+          <div className={`text-3xl font-semibold font-display ${completionPct == 100 ? 'text-profit' : completionPct >= 50 ? 'text-warn' : 'text-loss'}`}>
             {completionPct}%
           </div>
         </div>
 
         <div className="w-full h-2 bg-bg-secondary rounded-full overflow-hidden mb-5">
-          <div className={`h-full rounded-full transition-all duration-500 ${completionPct == 100 ? 'bg-profit' : completionPct >= 50 ? 'bg-amber-400' : 'bg-loss'}`}
+          <div className={`h-full rounded-full transition-all duration-500 ${completionPct == 100 ? 'bg-profit' : completionPct >= 50 ? 'bg-warn' : 'bg-loss'}`}
             style={{ width: `${completionPct}%` }} />
         </div>
 
@@ -104,20 +105,20 @@ export default function PlaybookPage() {
       </div>
 
       {/* Rules management */}
-      <div className="bg-bg-card border border-brd rounded-xl p-6">
-        <h2 className="font-display font-bold text-lg mb-4">Mes Règles de Trading</h2>
+      <div className="card p-6">
+        <h2 className="font-display font-semibold text-lg mb-4">Mes Règles de Trading</h2>
 
         <form onSubmit={addRule} className="flex gap-2 mb-5">
           <input type="text" value={newRule} onChange={e => setNewRule(e.target.value)} placeholder="Nouvelle règle..."
             className="flex-1 bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent" />
-          <button type="submit" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-lg hover:opacity-90 shadow-lg shadow-accent/25">+</button>
+          <button type="submit" className="px-5 py-2.5 bg-accent-strong hover:bg-accent text-white text-sm font-semibold rounded-lg shadow-lg shadow-accent/25">+</button>
         </form>
 
         <div className="space-y-2">
           {rules.map((r, i) => (
             <div key={r.id} className="flex items-center justify-between p-3 bg-bg-secondary border border-brd rounded-lg group">
               <div className="flex items-center gap-3">
-                <span className="text-[0.65rem] text-txt-3 font-mono font-bold w-5">{i + 1}.</span>
+                <span className="text-[0.72rem] text-txt-3 font-mono font-semibold w-5">{i + 1}.</span>
                 <span className="text-sm">{r.text}</span>
               </div>
               <button onClick={() => deleteRule(r.id)} className="text-txt-3 hover:text-loss opacity-0 group-hover:opacity-100 transition-all text-lg px-2">×</button>

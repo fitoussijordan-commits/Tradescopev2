@@ -4,54 +4,80 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* ==========================================================
+   TradeScope — design tokens
+   Graphite neutre + accent violet électrique.
+   Profit / perte gardent leur sens (vert / rouge) et ne
+   rentrent jamais en concurrence avec l'accent.
+   ========================================================== */
+
 /* ========== DARK THEME (default) ========== */
 :root {
-  --bg-primary: #08090E;
-  --bg-secondary: #0E1018;
-  --bg-card: #13151F;
-  --bg-card-hover: #181B28;
-  --sidebar: #0B0C14;
-  --accent: #3B82F6;
-  --accent-dim: rgba(59, 130, 246, 0.12);
-  --accent-glow: rgba(59, 130, 246, 0.25);
-  --profit: #22C55E;
-  --profit-dim: rgba(34, 197, 94, 0.12);
-  --loss: #EF4444;
-  --loss-dim: rgba(239, 68, 68, 0.12);
-  --txt-1: #F0F2F5;
-  --txt-2: #8B92A5;
-  --txt-3: #4B5269;
-  --brd: rgba(255, 255, 255, 0.06);
-  --brd-hover: rgba(255, 255, 255, 0.12);
+  --bg-primary: #09090B;
+  --bg-secondary: #111114;
+  --bg-card: #141418;
+  --bg-card-hover: #1A1A1F;
+  --sidebar: #0C0C0F;
+  --accent: #8B7BFF;
+  --accent-rgb: 139 123 255;
+  --profit-rgb: 61 214 140;
+  --loss-rgb: 255 93 108;
+  --warn-rgb: 245 181 68;
+  --accent-strong: #7461FF;
+  --accent-dim: rgba(139, 123, 255, 0.12);
+  --accent-glow: rgba(139, 123, 255, 0.28);
+  --profit: #3DD68C;
+  --profit-dim: rgba(61, 214, 140, 0.12);
+  --loss: #FF5D6C;
+  --loss-dim: rgba(255, 93, 108, 0.12);
+  --warn: #F5B544;
+  --txt-1: #F4F4F6;
+  --txt-2: #A0A0AB;
+  --txt-3: #62626D;
+  --brd: rgba(255, 255, 255, 0.07);
+  --brd-hover: rgba(255, 255, 255, 0.14);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 24px 48px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --grid-line: rgba(255, 255, 255, 0.035);
   color-scheme: dark;
 }
 
 /* ========== LIGHT THEME ========== */
 [data-theme="light"] {
-  --bg-primary: #F5F7FA;
+  --bg-primary: #F6F6F8;
   --bg-secondary: #FFFFFF;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #F0F2F5;
-  --sidebar: #FAFBFC;
-  --accent: #2563EB;
-  --accent-dim: rgba(37, 99, 235, 0.08);
-  --accent-glow: rgba(37, 99, 235, 0.15);
-  --profit: #16A34A;
-  --profit-dim: rgba(22, 163, 74, 0.08);
-  --loss: #DC2626;
-  --loss-dim: rgba(220, 38, 38, 0.08);
-  --txt-1: #111827;
-  --txt-2: #6B7280;
-  --txt-3: #9CA3AF;
-  --brd: rgba(0, 0, 0, 0.08);
-  --brd-hover: rgba(0, 0, 0, 0.15);
+  --bg-card-hover: #F4F4F7;
+  --sidebar: #FBFBFC;
+  --accent: #6246EA;
+  --accent-rgb: 98 70 234;
+  --profit-rgb: 18 161 80;
+  --loss-rgb: 229 54 74;
+  --warn-rgb: 201 138 18;
+  --accent-strong: #5234DB;
+  --accent-dim: rgba(98, 70, 234, 0.08);
+  --accent-glow: rgba(98, 70, 234, 0.18);
+  --profit: #12A150;
+  --profit-dim: rgba(18, 161, 80, 0.09);
+  --loss: #E5364A;
+  --loss-dim: rgba(229, 54, 74, 0.08);
+  --warn: #C98A12;
+  --txt-1: #111114;
+  --txt-2: #5F5F6B;
+  --txt-3: #9A9AA5;
+  --brd: rgba(17, 17, 20, 0.08);
+  --brd-hover: rgba(17, 17, 20, 0.16);
+  --shadow-card: 0 1px 2px rgba(17, 17, 20, 0.04), 0 1px 1px rgba(17, 17, 20, 0.02);
+  --shadow-pop: 0 24px 48px -12px rgba(17, 17, 20, 0.18), 0 0 0 1px rgba(17, 17, 20, 0.06);
+  --grid-line: rgba(17, 17, 20, 0.04);
   color-scheme: light;
 }
 
 ::selection { background: var(--accent); color: white; }
-::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--txt-3); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--brd-hover); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--txt-3); }
 
 body {
   overflow-x: hidden;
@@ -59,12 +85,16 @@ body {
   color: var(--txt-1);
   transition: background 0.3s, color 0.3s;
   -webkit-text-size-adjust: 100%;
+  font-feature-settings: "ss01", "cv11";
 }
 
 html, body {
   max-width: 100vw;
   overflow-x: hidden;
 }
+
+/* Chiffres alignés partout où on affiche des montants */
+.font-mono, .font-display, .tabular { font-variant-numeric: tabular-nums; }
 
 /* Prevent iOS auto-zoom on inputs */
 input, select, textarea, button {
@@ -94,20 +124,130 @@ html, body, main, aside, div, section, nav {
   touch-action: pan-x pan-y;
 }
 
+/* ========== Base : champs de formulaire cohérents partout ========== */
+@layer base {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea {
+    border-radius: 10px;
+    transition: border-color .15s, box-shadow .15s, background-color .15s;
+  }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px var(--accent-dim);
+    outline: none;
+  }
+  input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A8A95' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    padding-right: 2rem !important;
+  }
+  button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  h1, h2, h3 { letter-spacing: -0.02em; }
+}
+
+/* ========== Composants réutilisables ========== */
+@layer components {
+  .card {
+    @apply bg-bg-card border border-brd rounded-2xl;
+    box-shadow: var(--shadow-card);
+  }
+  .card-hover { @apply transition-colors hover:border-brd-hover; }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn px-4 py-2.5 text-white;
+    background: var(--accent-strong);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset, 0 8px 24px -8px var(--accent-glow);
+  }
+  .btn-primary:hover { background: var(--accent); }
+  .btn-secondary {
+    @apply btn px-4 py-2.5 border border-brd bg-bg-card text-txt-1 hover:border-brd-hover hover:bg-bg-card-hover;
+  }
+  .btn-ghost {
+    @apply btn px-3 py-2 text-txt-2 hover:text-txt-1 hover:bg-bg-card-hover;
+  }
+
+  .field {
+    @apply w-full bg-bg-secondary border border-brd px-3.5 py-2.5 text-sm text-txt-1 placeholder:text-txt-3;
+  }
+  .field-label {
+    @apply block text-xs font-medium text-txt-2 mb-1.5;
+  }
+
+  .eyebrow {
+    @apply text-[0.68rem] font-medium uppercase tracking-[0.12em] text-txt-3 font-mono;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-brd bg-bg-card px-3 py-1 text-xs font-medium text-txt-2;
+  }
+
+  .icon-btn {
+    @apply w-9 h-9 rounded-xl border border-brd bg-bg-card flex items-center justify-center text-txt-2 hover:text-txt-1 hover:border-brd-hover transition-all;
+  }
+}
+
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-up { animation: fadeUp 0.3s ease; }
+.animate-fade-up { animation: fadeUp 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
 
+/* Cartes métriques : liseré lumineux au survol */
 .metric-glow::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
+  top: 0; left: 16px; right: 16px;
+  height: 1px;
   background: linear-gradient(90deg, transparent, var(--accent), transparent);
   opacity: 0;
   transition: opacity 0.2s;
 }
 .metric-glow:hover::before { opacity: 1; }
+
+/* Fond quadrillé + halo pour la landing et l'auth */
+.bg-grid {
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+.bg-halo {
+  background: radial-gradient(ellipse 60% 50% at 50% 0%, var(--accent-glow), transparent 70%);
+}
+
+.text-gradient {
+  background: linear-gradient(180deg, var(--txt-1) 30%, color-mix(in srgb, var(--txt-1) 55%, transparent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-gradient-accent {
+  background: linear-gradient(90deg, var(--accent) 0%, #C4B5FF 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+[data-theme="light"] .text-gradient-accent {
+  background: linear-gradient(90deg, #5234DB 0%, #9B5CF6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

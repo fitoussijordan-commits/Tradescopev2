@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
+import { PageLoader } from '@/components/Brand';
 
 export default function ExportPage() {
   const [accounts, setAccounts] = useState([]);
@@ -386,17 +387,17 @@ export default function ExportPage() {
     setExporting(false);
   };
 
-  if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
+  if (loading) return <PageLoader />;
 
   return (
     <div className="max-w-2xl mx-auto animate-fade-up">
-      <div className="bg-bg-card border border-brd rounded-xl p-6">
-        <h2 className="font-display font-bold text-xl mb-1">Export Excel</h2>
+      <div className="card p-6">
+        <h2 className="font-display font-semibold text-xl mb-1">Export Excel</h2>
         <p className="text-txt-2 text-sm mb-6">Genere un fichier Excel avec tes trades, par mois.</p>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider mb-1.5">Compte</label>
+            <label className="block eyebrow mb-1.5">Compte</label>
             <select value={selectedAccount || ''} onChange={e => setSelectedAccount(e.target.value)}
               className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent">
               {accounts.map(a => <option key={a.id} value={a.id}>{a.name} — {a.prop_firm}</option>)}
@@ -405,17 +406,17 @@ export default function ExportPage() {
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider mb-1.5">Perte Max (%)</label>
+              <label className="block eyebrow mb-1.5">Perte Max (%)</label>
               <input type="number" step="0.1" value={maxLoss} onChange={e => setMaxLoss(e.target.value)}
                 className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent" />
             </div>
             <div>
-              <label className="block text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider mb-1.5">Obj/Semaine (%)</label>
+              <label className="block eyebrow mb-1.5">Obj/Semaine (%)</label>
               <input type="number" step="0.1" value={objWeek} onChange={e => setObjWeek(e.target.value)}
                 className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent" />
             </div>
             <div>
-              <label className="block text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider mb-1.5">Obj/Jour (%)</label>
+              <label className="block eyebrow mb-1.5">Obj/Jour (%)</label>
               <input type="number" step="0.1" value={objDay} onChange={e => setObjDay(e.target.value)}
                 className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent" />
             </div>
@@ -425,10 +426,10 @@ export default function ExportPage() {
           {availableMonths.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider">Mois a exporter</label>
+                <label className="eyebrow">Mois a exporter</label>
                 <div className="flex gap-2">
-                  <button onClick={selectAll} className="text-[0.6rem] text-accent font-bold hover:underline">Tout</button>
-                  <button onClick={selectNone} className="text-[0.6rem] text-txt-3 font-bold hover:underline">Aucun</button>
+                  <button onClick={selectAll} className="text-[0.7rem] text-accent font-semibold hover:underline">Tout</button>
+                  <button onClick={selectNone} className="text-[0.7rem] text-txt-3 font-semibold hover:underline">Aucun</button>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -437,7 +438,7 @@ export default function ExportPage() {
                   const active = selectedMonths.includes(m);
                   return (
                     <button key={m} onClick={() => toggleMonth(m)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95 ${active ? 'bg-accent text-white' : 'bg-bg-secondary border border-brd text-txt-2 hover:border-accent'}`}>
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95 ${active ? 'bg-accent-strong hover:bg-accent text-white' : 'bg-bg-secondary border border-brd text-txt-2 hover:border-accent'}`}>
                       {monthNames[mo - 1]} {y}
                     </button>
                   );
@@ -447,7 +448,7 @@ export default function ExportPage() {
           )}
 
           <button onClick={generateExcel} disabled={exporting || !selectedAccount || selectedMonths.length === 0}
-            className="w-full py-3 bg-accent text-white font-bold rounded-lg hover:opacity-90 transition-all shadow-lg shadow-accent-glow disabled:opacity-50">
+            className="w-full py-3 bg-accent-strong hover:bg-accent text-white font-semibold rounded-lg transition-all disabled:opacity-50">
             {exporting ? 'Generation en cours...' : 'Telecharger Excel'}
           </button>
         </div>

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { useAccount } from '@/components/AccountContext';
+import { PageLoader } from '@/components/Brand';
 
 // ============================================================
 // HEALTH SCORE GAUGE (SVG)
@@ -15,7 +16,7 @@ function HealthGauge({ score, size = 130 }) {
 
   const getColor = (s) => {
     if (s >= 75) return 'var(--profit)';
-    if (s >= 50) return '#f59e0b';
+    if (s >= 50) return 'var(--warn)';
     if (s >= 30) return '#f97316';
     return 'var(--loss)';
   };
@@ -51,7 +52,7 @@ function HealthGauge({ score, size = 130 }) {
           / 100
         </text>
       </svg>
-      <div className="text-xs font-bold mt-1" style={{ color: getColor(score) }}>{getLabel(score)}</div>
+      <div className="text-xs font-semibold mt-1" style={{ color: getColor(score) }}>{getLabel(score)}</div>
     </div>
   );
 }
@@ -64,11 +65,11 @@ function MetricBar({ label, value, max, unit = '', color, invert = false }) {
   const displayPct = invert ? 100 - pct : pct;
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[0.6rem] text-txt-3 font-mono w-20 truncate">{label}</span>
+      <span className="text-[0.7rem] text-txt-3 font-mono w-20 truncate">{label}</span>
       <div className="flex-1 h-2 bg-bg-secondary rounded-full overflow-hidden">
         <div className="h-full rounded-full transition-all duration-700" style={{ width: `${displayPct}%`, backgroundColor: color }} />
       </div>
-      <span className="text-[0.65rem] font-mono font-bold w-12 text-right" style={{ color }}>{value}{unit}</span>
+      <span className="text-[0.72rem] font-mono font-semibold w-12 text-right" style={{ color }}>{value}{unit}</span>
     </div>
   );
 }
@@ -500,23 +501,23 @@ ${sorted.slice(0, 10).map(t => `  - ${t.date} | ${t.instrument || '?'} ${t.type 
     return text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/^#{1,3} (.+)$/gm, '<div class="font-bold text-sm mt-3 mb-1 text-accent">$1</div>')
+      .replace(/^#{1,3} (.+)$/gm, '<div class="font-semibold text-sm mt-3 mb-1 text-accent">$1</div>')
       .replace(/^- (.+)$/gm, '<div class="flex gap-2 text-sm"><span class="text-accent flex-shrink-0">▸</span><span>$1</span></div>')
       .replace(/\n\n/g, '<br/>')
       .replace(/\n/g, '<br/>');
   };
 
-  if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
+  if (loading) return <PageLoader />;
 
-  const insightColors = { danger: 'bg-loss-dim border-loss/20 text-loss', warning: 'bg-amber-500/10 border-amber-500/20 text-amber-400', success: 'bg-profit-dim border-profit/20 text-profit', info: 'bg-accent-dim border-accent/20 text-accent' };
+  const insightColors = { danger: 'bg-loss-dim border-loss/20 text-loss', warning: 'bg-warn/10 border-warn/20 text-warn', success: 'bg-profit-dim border-profit/20 text-profit', info: 'bg-accent-dim border-accent/20 text-accent' };
 
   return (
     <div className="animate-fade-up max-w-5xl flex flex-col h-[calc(100vh-160px)]">
       {/* Header */}
       <div className="flex justify-between items-center mb-4 flex-shrink-0">
         <div>
-          <h2 className="font-display font-bold text-xl flex items-center gap-2">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">✦</span> Analyse IA
+          <h2 className="font-display font-semibold text-xl flex items-center gap-2">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-[#C4B5FF]">✦</span> Analyse IA
           </h2>
           <p className="text-txt-3 text-sm mt-0.5">L'IA analyse tes {at.length} trades et te coache</p>
         </div>
@@ -533,20 +534,20 @@ ${sorted.slice(0, 10).map(t => `  - ${t.date} | ${t.instrument || '?'} ${t.type 
           {/* Health Score + Key Metrics Row */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             {/* Health Gauge */}
-            <div className="bg-bg-card border border-brd rounded-xl p-4 flex flex-col items-center justify-center">
-              <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider mb-2">Score de Santé</div>
+            <div className="card p-4 flex flex-col items-center justify-center">
+              <div className="eyebrow mb-2">Score de Santé</div>
               <HealthGauge score={stats.healthScore} size={120} />
             </div>
 
             {/* Key metrics */}
-            <div className="md:col-span-3 bg-bg-card border border-brd rounded-xl p-4">
-              <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider mb-3">Indicateurs clés</div>
+            <div className="md:col-span-3 card p-4">
+              <div className="eyebrow mb-3">Indicateurs clés</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <MetricBar label="Win Rate" value={parseFloat(stats.winRate.toFixed(0))} max={100} unit="%" color={stats.winRate >= 50 ? 'var(--profit)' : 'var(--loss)'} />
-                <MetricBar label="P. Factor" value={parseFloat((stats.profitFactor === Infinity ? 3 : Math.min(stats.profitFactor, 3)).toFixed(1))} max={3} unit="" color={stats.profitFactor >= 1.5 ? 'var(--profit)' : stats.profitFactor >= 1 ? '#f59e0b' : 'var(--loss)'} />
-                <MetricBar label="Discipline" value={parseFloat(stats.stratRespect.toFixed(0))} max={100} unit="%" color={stats.stratRespect >= 70 ? 'var(--profit)' : stats.stratRespect >= 40 ? '#f59e0b' : 'var(--loss)'} />
-                <MetricBar label="Drawdown" value={parseFloat(stats.currentDD.toFixed(0))} max={Math.max(stats.maxDD, 1)} unit="€" color={stats.currentDD > stats.maxDD * 0.5 ? 'var(--loss)' : '#f59e0b'} invert />
-                <MetricBar label="R:R Moy" value={parseFloat(Math.max(stats.avgRR, 0).toFixed(1))} max={3} unit="R" color={stats.avgRR >= 1.5 ? 'var(--profit)' : stats.avgRR >= 1 ? '#f59e0b' : 'var(--loss)'} />
+                <MetricBar label="P. Factor" value={parseFloat((stats.profitFactor === Infinity ? 3 : Math.min(stats.profitFactor, 3)).toFixed(1))} max={3} unit="" color={stats.profitFactor >= 1.5 ? 'var(--profit)' : stats.profitFactor >= 1 ? 'var(--warn)' : 'var(--loss)'} />
+                <MetricBar label="Discipline" value={parseFloat(stats.stratRespect.toFixed(0))} max={100} unit="%" color={stats.stratRespect >= 70 ? 'var(--profit)' : stats.stratRespect >= 40 ? 'var(--warn)' : 'var(--loss)'} />
+                <MetricBar label="Drawdown" value={parseFloat(stats.currentDD.toFixed(0))} max={Math.max(stats.maxDD, 1)} unit="€" color={stats.currentDD > stats.maxDD * 0.5 ? 'var(--loss)' : 'var(--warn)'} invert />
+                <MetricBar label="R:R Moy" value={parseFloat(Math.max(stats.avgRR, 0).toFixed(1))} max={3} unit="R" color={stats.avgRR >= 1.5 ? 'var(--profit)' : stats.avgRR >= 1 ? 'var(--warn)' : 'var(--loss)'} />
                 <MetricBar label="Régularité" value={stats.greenMonths} max={Math.max(stats.months.length, 1)} unit={`/${stats.months.length}`} color={stats.greenMonths >= stats.redMonths ? 'var(--profit)' : 'var(--loss)'} />
               </div>
             </div>
@@ -554,8 +555,8 @@ ${sorted.slice(0, 10).map(t => `  - ${t.date} | ${t.instrument || '?'} ${t.type 
 
           {/* Insights */}
           {insights.length > 0 && (
-            <div className="bg-bg-card border border-brd rounded-xl p-4">
-              <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider mb-3">Insights automatiques</div>
+            <div className="card p-4">
+              <div className="eyebrow mb-3">Insights automatiques</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {insights.map((ins, i) => (
                   <div key={i} className={`flex items-start gap-2 px-3 py-2.5 rounded-lg border text-xs leading-relaxed ${insightColors[ins.type]}`}>
@@ -594,12 +595,12 @@ ${sorted.slice(0, 10).map(t => `  - ${t.date} | ${t.instrument || '?'} ${t.type 
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
             {m.role === 'model' && (
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold mr-2 flex-shrink-0 mt-1">✦</div>
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#9C8CFF] to-[#5B3FF0] flex items-center justify-center text-white text-xs font-semibold mr-2 flex-shrink-0 mt-1">✦</div>
             )}
             <div className="relative">
               <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 m.role === 'user'
-                  ? 'bg-accent text-white rounded-br-sm'
+                  ? 'bg-accent-strong hover:bg-accent text-white rounded-br-sm'
                   : 'bg-bg-card border border-brd rounded-bl-sm'
               }`}>
                 {m.role === 'model'
@@ -611,7 +612,7 @@ ${sorted.slice(0, 10).map(t => `  - ${t.date} | ${t.instrument || '?'} ${t.type 
               {m.role === 'model' && (
                 <button
                   onClick={() => copyMessage(m.content, i)}
-                  className="absolute -bottom-1 right-0 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 bg-bg-secondary border border-brd rounded text-[0.6rem] text-txt-3 hover:text-accent hover:border-accent"
+                  className="absolute -bottom-1 right-0 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 bg-bg-secondary border border-brd rounded text-[0.7rem] text-txt-3 hover:text-accent hover:border-accent"
                 >
                   {copiedIdx === i ? '✓ Copié' : '◇ Copier'}
                 </button>
@@ -622,8 +623,8 @@ ${sorted.slice(0, 10).map(t => `  - ${t.date} | ${t.instrument || '?'} ${t.type 
 
         {thinking && (
           <div className="flex justify-start">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold mr-2 flex-shrink-0">✦</div>
-            <div className="bg-bg-card border border-brd rounded-2xl rounded-bl-sm px-4 py-3">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#9C8CFF] to-[#5B3FF0] flex items-center justify-center text-white text-xs font-semibold mr-2 flex-shrink-0">✦</div>
+            <div className="card rounded-bl-sm px-4 py-3">
               <div className="flex gap-1">
                 <span className="w-1.5 h-1.5 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-1.5 h-1.5 bg-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -645,10 +646,10 @@ ${sorted.slice(0, 10).map(t => `  - ${t.date} | ${t.instrument || '?'} ${t.type 
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
             placeholder="Pose une question sur tes performances..."
             disabled={thinking}
-            className="flex-1 bg-bg-card border border-brd rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent disabled:opacity-50"
+            className="flex-1 card px-4 py-3 text-sm focus:outline-none focus:border-accent disabled:opacity-50"
           />
           <button onClick={() => sendMessage(input)} disabled={!input.trim() || thinking}
-            className="px-4 py-3 bg-accent text-white rounded-xl font-bold text-sm hover:opacity-90 disabled:opacity-40 transition-all active:scale-95">
+            className="px-4 py-3 bg-accent-strong hover:bg-accent text-white rounded-xl font-semibold text-sm disabled:opacity-40 transition-all active:scale-95">
             ↑
           </button>
         </div>

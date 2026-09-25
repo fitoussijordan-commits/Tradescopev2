@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import AuthLayout from '@/components/AuthLayout';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -29,62 +30,49 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-accent to-purple-400 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-accent-glow">
-              TS
-            </div>
-            <span className="font-display font-bold text-xl tracking-tight">TradeScope</span>
-          </div>
-          <h1 className="font-display text-2xl font-bold mb-2">Bon retour</h1>
-          <p className="text-txt-2 text-sm">Connecte-toi à ton journal de trading</p>
+    <AuthLayout title="Bon retour" subtitle="Connecte-toi à ton journal de trading.">
+      <form onSubmit={handleLogin} className="space-y-4">
+        {error && (
+          <div className="p-3 rounded-xl text-sm bg-loss-dim text-loss border border-loss/20">{error}</div>
+        )}
+
+        <div>
+          <label className="field-label" htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="toi@email.com"
+            autoComplete="email"
+            required
+            className="field"
+          />
         </div>
 
-        <form onSubmit={handleLogin} className="bg-bg-card border border-brd rounded-xl p-6 space-y-4">
-          {error && (
-            <div className="p-3 rounded-lg text-sm bg-loss-dim text-loss">{error}</div>
-          )}
+        <div>
+          <label className="field-label" htmlFor="password">Mot de passe</label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            required
+            className="field"
+          />
+        </div>
 
-          <div>
-            <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="jordan@email.com"
-              required
-              className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-sm text-txt-1 placeholder:text-txt-3 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-dim transition-all"
-            />
-          </div>
+        <button type="submit" disabled={loading} className="btn-primary w-full !py-3">
+          {loading ? 'Connexion…' : 'Se connecter'}
+        </button>
 
-          <div>
-            <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Mot de passe</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-sm text-txt-1 placeholder:text-txt-3 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-dim transition-all"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-accent text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all shadow-lg shadow-accent-glow disabled:opacity-50 text-sm"
-          >
-            {loading ? 'Connexion...' : 'Se connecter'}
-          </button>
-
-          <p className="text-center text-txt-2 text-xs">
-            Pas encore de compte ?{' '}
-            <Link href="/auth/register" className="text-accent hover:underline">S'inscrire</Link>
-          </p>
-        </form>
-      </div>
-    </div>
+        <p className="text-center text-txt-2 text-sm pt-2">
+          Pas encore de compte ?{' '}
+          <Link href="/auth/register" className="text-accent font-medium hover:underline">S'inscrire</Link>
+        </p>
+      </form>
+    </AuthLayout>
   );
 }

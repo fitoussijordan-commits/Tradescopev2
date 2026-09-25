@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
+import { PageLoader } from '@/components/Brand';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -255,7 +256,7 @@ export default function AccountPage() {
     }
   }, [paypalReady, selectedPlan, paypalPlans, promoData]);
 
-  if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
+  if (loading) return <PageLoader />;
 
   const hasSubscription = profile?.subscription_status === 'active' || profile?.subscription_status === 'trialing';
 
@@ -268,8 +269,8 @@ export default function AccountPage() {
   const renderPlanCard = (p) => (
     <button key={p.key} onClick={() => { setSelectedPlan(p.key); loadPayPalPlans(); }} disabled={planLoading !== null}
       className={`p-4 rounded-xl border text-left transition-all active:scale-95 ${planLoading === p.key ? 'opacity-60' : 'hover:-translate-y-0.5'} ${selectedPlan === p.key ? 'border-accent bg-accent-dim ring-2 ring-accent/30' : p.popular ? 'border-accent/40 bg-accent-dim/50' : 'border-brd hover:border-brd-hover'}`}>
-      <div className="font-display font-bold">{p.name}</div>
-      <div className="text-xl font-bold font-display">
+      <div className="font-display font-semibold">{p.name}</div>
+      <div className="text-xl font-semibold font-display">
         {hasDiscount(p.key) ? (
           <>
             <span className="line-through text-txt-3 text-sm mr-1">{p.price}</span>
@@ -282,9 +283,9 @@ export default function AccountPage() {
       </div>
       <div className="text-txt-2 text-xs mt-1">{p.desc}{!hasSubscription && ' · 7j essai gratuit'}</div>
       {hasDiscount(p.key) && (
-        <div className="text-profit text-xs font-bold mt-1">-{promoData.discount_percent}% appliqué</div>
+        <div className="text-profit text-xs font-semibold mt-1">-{promoData.discount_percent}% appliqué</div>
       )}
-      {selectedPlan === p.key && <div className="text-accent text-xs font-bold mt-2">✓ Sélectionné</div>}
+      {selectedPlan === p.key && <div className="text-accent text-xs font-semibold mt-2">✓ Sélectionné</div>}
     </button>
   );
 
@@ -292,8 +293,8 @@ export default function AccountPage() {
     <div className="mb-4">
       {promoData ? (
         <div className="flex items-center gap-2 px-3 py-2 bg-profit/10 border border-profit/30 rounded-lg">
-          <span className="text-profit text-sm font-bold">✓ Code {promoData.code} appliqué (-{promoData.discount_percent}%)</span>
-          <button onClick={removePromo} className="ml-auto text-txt-3 hover:text-txt-1 text-xs font-bold">✕ Retirer</button>
+          <span className="text-profit text-sm font-semibold">✓ Code {promoData.code} appliqué (-{promoData.discount_percent}%)</span>
+          <button onClick={removePromo} className="ml-auto text-txt-3 hover:text-txt-1 text-xs font-semibold">✕ Retirer</button>
         </div>
       ) : (
         <div className="flex gap-2">
@@ -323,7 +324,7 @@ export default function AccountPage() {
       <div className="border border-brd rounded-xl p-5 bg-bg-secondary">
         <p className="text-sm text-txt-2 mb-3 text-center">Finalise ton abonnement avec PayPal :</p>
         {hasDiscount(selectedPlan) && (
-          <p className="text-center text-profit text-xs font-bold mb-3">
+          <p className="text-center text-profit text-xs font-semibold mb-3">
             Prix avec promo : {formatPrice(getDiscountedPrice(selectedPlan))}/mois au lieu de {formatPrice(basePrices[selectedPlan])}/mois
           </p>
         )}
@@ -337,13 +338,13 @@ export default function AccountPage() {
   return (
     <div className="max-w-3xl mx-auto animate-fade-up">
       {/* Subscription */}
-      <div className="bg-bg-card border border-brd rounded-xl p-6 mb-6">
-        <h2 className="font-display font-bold text-lg mb-4">Mon Abonnement</h2>
+      <div className="card p-6 mb-6">
+        <h2 className="font-display font-semibold text-lg mb-4">Mon Abonnement</h2>
 
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-brd">
           <div>
             <div className="text-sm text-txt-2">Plan actuel</div>
-            <div className="font-display font-bold text-xl capitalize">{profile?.plan || 'Aucun'}</div>
+            <div className="font-display font-semibold text-xl capitalize">{profile?.plan || 'Aucun'}</div>
             <div className="text-xs font-mono text-txt-3 mt-1">
               {profile?.subscription_status === 'trialing' && '⏳ Période d\'essai'}
               {profile?.subscription_status === 'active' && '✓ Actif'}
@@ -386,10 +387,10 @@ export default function AccountPage() {
       </div>
 
       {/* Trading Accounts */}
-      <div className="bg-bg-card border border-brd rounded-xl p-6">
+      <div className="card p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="font-display font-bold text-lg">Comptes de Trading</h2>
-          <button onClick={() => setShowAddForm(true)} className="px-4 py-2 bg-accent text-white text-sm font-bold rounded-lg hover:opacity-90 transition-all shadow-lg shadow-accent-glow">
+          <h2 className="font-display font-semibold text-lg">Comptes de Trading</h2>
+          <button onClick={() => setShowAddForm(true)} className="px-4 py-2 bg-accent-strong hover:bg-accent text-white text-sm font-semibold rounded-lg transition-all">
             + Nouveau
           </button>
         </div>
@@ -401,32 +402,32 @@ export default function AccountPage() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-1">Nom</label>
+                      <label className="block eyebrow mb-1">Nom</label>
                       <input type="text" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})}
                         className="w-full bg-bg-card border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
                     </div>
                     <div>
-                      <label className="block text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-1">Prop Firm</label>
+                      <label className="block eyebrow mb-1">Prop Firm</label>
                       <input type="text" value={editForm.prop_firm} onChange={e => setEditForm({...editForm, prop_firm: e.target.value})}
                         className="w-full bg-bg-card border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
                     </div>
                     <div>
-                      <label className="block text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-1">Capital</label>
+                      <label className="block eyebrow mb-1">Capital</label>
                       <input type="number" value={editForm.base_capital} onChange={e => setEditForm({...editForm, base_capital: e.target.value})}
                         className="w-full bg-bg-card border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => saveEdit(a.id)} className="px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:opacity-90">Sauvegarder</button>
+                    <button onClick={() => saveEdit(a.id)} className="px-4 py-1.5 bg-accent-strong hover:bg-accent text-white text-xs font-semibold rounded-lg ">Sauvegarder</button>
                     <button onClick={cancelEdit} className="px-4 py-1.5 border border-brd text-txt-2 text-xs rounded-lg hover:border-accent">Annuler</button>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div className="min-w-0">
-                    <div className="font-bold truncate">
+                    <div className="font-semibold truncate">
                       {a.name}
-                      {a.is_burned && <span className="ml-2 text-[0.6rem] bg-loss text-white px-1.5 py-0.5 rounded font-bold">GRILLE</span>}
+                      {a.is_burned && <span className="ml-2 text-[0.7rem] bg-loss text-white px-1.5 py-0.5 rounded font-semibold">GRILLE</span>}
                     </div>
                     <div className="text-txt-2 text-sm truncate">{a.prop_firm} · {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(a.base_capital)}</div>
                   </div>
@@ -434,10 +435,10 @@ export default function AccountPage() {
                     <button onClick={() => startEdit(a)} className="px-3 py-1.5 border border-brd text-txt-2 rounded-lg text-xs font-semibold hover:border-accent hover:text-accent transition-all">
                       Editer
                     </button>
-                    <button onClick={() => toggleBurn(a)} className={`px-3 py-1.5 border rounded-lg text-xs font-bold transition-all ${a.is_burned ? 'border-profit text-profit hover:bg-profit-dim' : 'border-loss text-loss hover:bg-loss-dim'}`}>
+                    <button onClick={() => toggleBurn(a)} className={`px-3 py-1.5 border rounded-lg text-xs font-semibold transition-all ${a.is_burned ? 'border-profit text-profit hover:bg-profit-dim' : 'border-loss text-loss hover:bg-loss-dim'}`}>
                       {a.is_burned ? 'Reactiver' : 'Griller'}
                     </button>
-                    <button onClick={() => deleteAccount(a.id, a.name)} className="px-3 py-1.5 border border-loss text-loss rounded-lg text-xs font-bold hover:bg-loss-dim transition-all">
+                    <button onClick={() => deleteAccount(a.id, a.name)} className="px-3 py-1.5 border border-loss text-loss rounded-lg text-xs font-semibold hover:bg-loss-dim transition-all">
                       x
                     </button>
                   </div>
@@ -461,7 +462,7 @@ export default function AccountPage() {
                 className="bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent" />
             </div>
             <div className="flex gap-3">
-              <button type="submit" className="px-4 py-2 bg-accent text-white text-sm font-bold rounded-lg hover:opacity-90">Créer</button>
+              <button type="submit" className="px-4 py-2 bg-accent-strong hover:bg-accent text-white text-sm font-semibold rounded-lg ">Créer</button>
               <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 border border-brd text-txt-2 text-sm rounded-lg hover:border-accent">Annuler</button>
             </div>
           </form>

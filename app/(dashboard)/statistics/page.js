@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import EquityCurve from '@/components/EquityCurve';
 import { useAccount } from '@/components/AccountContext';
+import { PageLoader } from '@/components/Brand';
 
 export default function StatisticsPage() {
   const { currentAccount, currentAccountId } = useAccount();
@@ -78,7 +79,7 @@ export default function StatisticsPage() {
 
   const selectedStrat = strategies.find(s => s.id === stratFilter);
 
-  if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
+  if (loading) return <PageLoader />;
 
   return (
     <div className="animate-fade-up">
@@ -86,11 +87,11 @@ export default function StatisticsPage() {
       <div className="flex items-center gap-3 mb-5 flex-wrap">
         <div className="flex gap-1.5 flex-wrap">
           <button onClick={() => setStratFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${stratFilter === 'all' ? 'bg-accent text-white' : 'bg-bg-card border border-brd text-txt-2'}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${stratFilter === 'all' ? 'bg-accent-strong hover:bg-accent text-white' : 'bg-bg-card border border-brd text-txt-2'}`}>
             Toutes
           </button>
           <button onClick={() => setStratFilter('hors')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${stratFilter === 'hors' ? 'bg-accent text-white' : 'bg-bg-card border border-brd text-txt-2'}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${stratFilter === 'hors' ? 'bg-accent-strong hover:bg-accent text-white' : 'bg-bg-card border border-brd text-txt-2'}`}>
             Hors stratégie
           </button>
           {strategies.map(s => (
@@ -107,14 +108,14 @@ export default function StatisticsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {/* Equity Curve */}
-        <div className="bg-bg-card border border-brd rounded-xl p-5 md:col-span-2 xl:col-span-3">
-          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-3">Courbe de Progression</h3>
+        <div className="card p-5 md:col-span-2 xl:col-span-3">
+          <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-3">Courbe de Progression</h3>
           <EquityCurve trades={at} baseCapital={account ? parseFloat(account.base_capital) : 0} height={220} />
         </div>
 
         {/* Day Performance */}
-        <div className="bg-bg-card border border-brd rounded-xl p-5">
-          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">Performance par Jour</h3>
+        <div className="card p-5">
+          <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-4">Performance par Jour</h3>
           <div className="space-y-2.5">
             {dayNames.map(d => (
               <div key={d} className="flex items-center gap-3">
@@ -122,7 +123,7 @@ export default function StatisticsPage() {
                 <div className="flex-1 h-5 bg-bg-secondary rounded overflow-hidden">
                   <div className="h-full rounded transition-all" style={{ width: `${(Math.abs(dayPnl[d]) / maxDay) * 100}%`, background: dayPnl[d] >= 0 ? 'var(--profit)' : 'var(--loss, #EF4444)' }} />
                 </div>
-                <span className={`text-xs font-mono font-bold w-16 text-right ${dayPnl[d] >= 0 ? 'text-profit' : 'text-loss'}`}>
+                <span className={`text-xs font-mono font-semibold w-16 text-right ${dayPnl[d] >= 0 ? 'text-profit' : 'text-loss'}`}>
                   {dayPnl[d] >= 0 ? '+' : ''}{dayPnl[d].toFixed(0)}€
                 </span>
               </div>
@@ -131,89 +132,89 @@ export default function StatisticsPage() {
         </div>
 
         {/* Long vs Short */}
-        <div className="bg-bg-card border border-brd rounded-xl p-5">
-          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">Long vs Short</h3>
+        <div className="card p-5">
+          <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-4">Long vs Short</h3>
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-profit-dim border border-profit/20 rounded-lg p-4 text-center">
-              <div className="text-[0.65rem] font-mono text-profit font-bold mb-2">LONG</div>
-              <div className={`text-xl font-bold font-display ${longPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(longPnl)}</div>
+              <div className="text-[0.72rem] font-mono text-profit font-semibold mb-2">LONG</div>
+              <div className={`text-xl font-semibold font-display ${longPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(longPnl)}</div>
               <div className="text-xs text-txt-2 mt-1">{longs.length} trades | {longWR}% WR</div>
             </div>
             <div className="bg-loss-dim border border-loss/20 rounded-lg p-4 text-center">
-              <div className="text-[0.65rem] font-mono text-loss font-bold mb-2">SHORT</div>
-              <div className={`text-xl font-bold font-display ${shortPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(shortPnl)}</div>
+              <div className="text-[0.72rem] font-mono text-loss font-semibold mb-2">SHORT</div>
+              <div className={`text-xl font-semibold font-display ${shortPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(shortPnl)}</div>
               <div className="text-xs text-txt-2 mt-1">{shorts.length} trades | {shortWR}% WR</div>
             </div>
           </div>
         </div>
 
         {/* Strategy */}
-        <div className="bg-bg-card border border-brd rounded-xl p-5">
-          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">Respect Stratégie</h3>
+        <div className="card p-5">
+          <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-4">Respect Stratégie</h3>
           <div className="text-center mb-4">
-            <div className={`text-3xl font-bold font-display ${stratPct >= 70 ? 'text-profit' : 'text-loss'}`}>{stratPct}%</div>
+            <div className={`text-3xl font-semibold font-display ${stratPct >= 70 ? 'text-profit' : 'text-loss'}`}>{stratPct}%</div>
             <div className="text-xs text-txt-2">{withStrat.length} / {at.length} trades</div>
           </div>
           <div className="border-t border-brd pt-3 space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-xs text-txt-3">Avec stratégie</span>
-              <span className={`font-bold font-mono text-sm ${withStratPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(withStratPnl)}</span>
+              <span className={`font-semibold font-mono text-sm ${withStratPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(withStratPnl)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs text-txt-3">Sans stratégie</span>
-              <span className={`font-bold font-mono text-sm ${withoutStratPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(withoutStratPnl)}</span>
+              <span className={`font-semibold font-mono text-sm ${withoutStratPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(withoutStratPnl)}</span>
             </div>
           </div>
         </div>
 
         {/* R:R */}
-        <div className="bg-bg-card border border-brd rounded-xl p-5">
-          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">Risk:Reward</h3>
+        <div className="card p-5">
+          <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-4">Risk:Reward</h3>
           <div className="text-center mb-4">
-            <div className={`text-3xl font-bold font-display ${avgRR && avgRR >= 0 ? 'text-profit' : avgRR ? 'text-loss' : 'text-txt-3'}`}>{avgRR ? `${avgRR}R` : '—'}</div>
+            <div className={`text-3xl font-semibold font-display ${avgRR && avgRR >= 0 ? 'text-profit' : avgRR ? 'text-loss' : 'text-txt-3'}`}>{avgRR ? `${avgRR}R` : '—'}</div>
             <div className="text-xs text-txt-2">{rrTrades.length > 0 ? `${rrTrades.length} / ${at.length} trades avec risque` : 'Aucun trade avec risque'}</div>
           </div>
           <div className="border-t border-brd pt-3 grid grid-cols-2 gap-3 text-center">
-            <div><div className="text-[0.65rem] text-txt-3 font-mono mb-1">Meilleur</div><div className="font-bold font-mono text-profit">{bestRR ? `+${bestRR}R` : '—'}</div></div>
-            <div><div className="text-[0.65rem] text-txt-3 font-mono mb-1">Pire</div><div className="font-bold font-mono text-loss">{worstRR ? `${worstRR}R` : '—'}</div></div>
+            <div><div className="text-[0.72rem] text-txt-3 font-mono mb-1">Meilleur</div><div className="font-semibold font-mono text-profit">{bestRR ? `+${bestRR}R` : '—'}</div></div>
+            <div><div className="text-[0.72rem] text-txt-3 font-mono mb-1">Pire</div><div className="font-semibold font-mono text-loss">{worstRR ? `${worstRR}R` : '—'}</div></div>
           </div>
         </div>
 
         {/* Session Performance */}
-        <div className="bg-bg-card border border-brd rounded-xl p-5">
-          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">🇬🇧 Londres vs 🇺🇸 US</h3>
+        <div className="card p-5">
+          <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-4">🇬🇧 Londres vs 🇺🇸 US</h3>
           {(londonTrades.length > 0 || usTrades.length > 0) ? (
             <>
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-center">
-                  <div className="text-[0.65rem] font-mono text-blue-400 font-bold mb-2">🇬🇧 LONDRES AM</div>
-                  <div className={`text-xl font-bold font-display ${londonPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(londonPnl)}</div>
+                <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 text-center">
+                  <div className="text-[0.72rem] font-mono text-accent font-semibold mb-2">🇬🇧 LONDRES AM</div>
+                  <div className={`text-xl font-semibold font-display ${londonPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(londonPnl)}</div>
                   <div className="text-xs text-txt-2 mt-1">{londonTrades.length} trades | {londonWR}% WR</div>
                 </div>
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 text-center">
-                  <div className="text-[0.65rem] font-mono text-amber-400 font-bold mb-2">🇺🇸 US PM</div>
-                  <div className={`text-xl font-bold font-display ${usPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(usPnl)}</div>
+                <div className="bg-warn/10 border border-warn/20 rounded-lg p-4 text-center">
+                  <div className="text-[0.72rem] font-mono text-warn font-semibold mb-2">🇺🇸 US PM</div>
+                  <div className={`text-xl font-semibold font-display ${usPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(usPnl)}</div>
                   <div className="text-xs text-txt-2 mt-1">{usTrades.length} trades | {usWR}% WR</div>
                 </div>
               </div>
               <div className="border-t border-brd pt-3 space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-txt-3">Moy. Londres</span>
-                  <span className={`font-bold font-mono text-sm ${londonAvg >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(londonAvg)}/trade</span>
+                  <span className={`font-semibold font-mono text-sm ${londonAvg >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(londonAvg)}/trade</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-txt-3">Moy. US</span>
-                  <span className={`font-bold font-mono text-sm ${usAvg >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(usAvg)}/trade</span>
+                  <span className={`font-semibold font-mono text-sm ${usAvg >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(usAvg)}/trade</span>
                 </div>
                 {(londonTrades.length > 0 && usTrades.length > 0) && (
                   <div className="flex justify-between items-center pt-2 border-t border-brd">
                     <span className="text-xs text-txt-3 font-semibold">Meilleure session</span>
-                    <span className="font-bold text-sm">{londonAvg > usAvg ? '🇬🇧 Londres' : londonAvg < usAvg ? '🇺🇸 US' : '= Egal'}</span>
+                    <span className="font-semibold text-sm">{londonAvg > usAvg ? '🇬🇧 Londres' : londonAvg < usAvg ? '🇺🇸 US' : '= Egal'}</span>
                   </div>
                 )}
               </div>
               {noSessionTrades.length > 0 && (
-                <div className="mt-3 text-[0.65rem] text-txt-3 text-center">{noSessionTrades.length} trade{noSessionTrades.length > 1 ? 's' : ''} sans session</div>
+                <div className="mt-3 text-[0.72rem] text-txt-3 text-center">{noSessionTrades.length} trade{noSessionTrades.length > 1 ? 's' : ''} sans session</div>
               )}
             </>
           ) : (
@@ -222,13 +223,13 @@ export default function StatisticsPage() {
         </div>
 
         {/* Best Instruments */}
-        <div className="bg-bg-card border border-brd rounded-xl p-5">
-          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">Meilleurs Instruments</h3>
+        <div className="card p-5">
+          <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-4">Meilleurs Instruments</h3>
           <div className="space-y-2">
             {topInstruments.length > 0 ? topInstruments.map(([inst, pnl]) => (
               <div key={inst} className="flex justify-between items-center p-2.5 bg-bg-secondary rounded-lg">
                 <span className="font-semibold text-sm">{inst}</span>
-                <span className={`font-mono font-bold text-sm ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{pnl.toFixed(0)}€</span>
+                <span className={`font-mono font-semibold text-sm ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{pnl.toFixed(0)}€</span>
               </div>
             )) : <div className="text-txt-3 text-center text-sm py-4">Pas de données</div>}
           </div>

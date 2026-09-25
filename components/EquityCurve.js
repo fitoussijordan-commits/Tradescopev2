@@ -85,9 +85,9 @@ export default function EquityCurve({ trades, baseCapital, height = 180 }) {
   return (
     <div>
       <div className="flex items-baseline gap-3 mb-2">
-        <span className="text-[0.5rem] text-txt-3 font-mono uppercase tracking-wider">Equity</span>
-        <span className="text-sm font-bold font-mono">{fmt(currentEquity)}€</span>
-        <span className={`text-xs font-mono font-bold ${change >= 0 ? 'text-profit' : 'text-loss'}`}>
+        <span className="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider">Equity</span>
+        <span className="text-sm font-semibold font-mono">{fmt(currentEquity)}€</span>
+        <span className={`text-xs font-mono font-semibold ${change >= 0 ? 'text-profit' : 'text-loss'}`}>
           {change >= 0 ? '+' : ''}{fmt(change)}€ ({change >= 0 ? '+' : ''}{changePct}%)
         </span>
       </div>
@@ -156,16 +156,16 @@ export default function EquityCurve({ trades, baseCapital, height = 180 }) {
               top: '-8px',
               transform: `translateX(${toX(hp.x) > width * 0.7 ? '-100%' : toX(hp.x) < width * 0.3 ? '0%' : '-50%'})`,
             }}>
-            <div className="text-[0.65rem] text-txt-3 font-mono">
+            <div className="text-[0.72rem] text-txt-3 font-mono">
               {new Date(hp.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
             </div>
-            <div className={`text-sm font-bold font-mono ${hp.dayPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+            <div className={`text-sm font-semibold font-mono ${hp.dayPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
               {hp.dayPnl >= 0 ? '+' : ''}{fmt(hp.dayPnl)}€
             </div>
-            <div className="text-[0.6rem] text-txt-2 font-mono">
+            <div className="text-[0.7rem] text-txt-2 font-mono">
               Capital: {fmt(hp.y)}€ · {hp.trades.length} trade{hp.trades.length > 1 ? 's' : ''}
             </div>
-            <div className="text-[0.5rem] text-accent mt-0.5">Cliquer pour details</div>
+            <div className="text-[0.65rem] text-accent mt-0.5">Cliquer pour details</div>
           </div>
         )}
       </div>
@@ -175,10 +175,10 @@ export default function EquityCurve({ trades, baseCapital, height = 180 }) {
         <>
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200]" onClick={() => setSelectedDay(null)} />
           <div className="fixed inset-0 z-[201] flex items-center justify-center p-4" onClick={() => setSelectedDay(null)}>
-            <div className="bg-bg-card border border-brd rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="card w-full max-w-lg max-h-[80vh] overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
               <div className="p-5 border-b border-brd flex justify-between items-center">
                 <div>
-                  <h3 className="font-display font-bold text-base">
+                  <h3 className="font-display font-semibold text-base">
                     Trades — {new Date(selectedDay.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                   </h3>
                 </div>
@@ -188,18 +188,18 @@ export default function EquityCurve({ trades, baseCapital, height = 180 }) {
               <div className="p-5">
                 <div className="grid grid-cols-3 gap-3 mb-5">
                   <div className="bg-bg-secondary border border-brd rounded-xl p-3">
-                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">P&L</div>
-                    <div className={`text-xl font-bold font-display ${selectedDayPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                    <div className="eyebrow">P&L</div>
+                    <div className={`text-xl font-semibold font-display ${selectedDayPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
                       {selectedDayPnl >= 0 ? '+' : ''}{fmt(selectedDayPnl)} €
                     </div>
                   </div>
                   <div className="bg-bg-secondary border border-brd rounded-xl p-3">
-                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">Trades</div>
-                    <div className="text-xl font-bold font-display">{selectedTrades.length}</div>
+                    <div className="eyebrow">Trades</div>
+                    <div className="text-xl font-semibold font-display">{selectedTrades.length}</div>
                   </div>
                   <div className="bg-bg-secondary border border-brd rounded-xl p-3">
-                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">W / L</div>
-                    <div className="text-xl font-bold font-display">
+                    <div className="eyebrow">W / L</div>
+                    <div className="text-xl font-semibold font-display">
                       <span className="text-profit">{selectedTrades.filter(t => parseFloat(t.pnl) > 0).length}</span>
                       <span className="text-txt-3">/</span>
                       <span className="text-loss">{selectedTrades.filter(t => parseFloat(t.pnl) < 0).length}</span>
@@ -211,16 +211,16 @@ export default function EquityCurve({ trades, baseCapital, height = 180 }) {
                   {selectedTrades.map(t => (
                     <div key={t.id} className="bg-bg-secondary border border-brd rounded-xl px-4 py-3 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <span className="font-bold text-sm">{t.instrument || '-'}</span>
-                        <span className={`text-[0.55rem] font-bold font-mono px-1.5 py-0.5 rounded ${t.type === 'LONG' ? 'bg-profit/15 text-profit' : 'bg-loss/15 text-loss'}`}>{t.type}</span>
-                        {t.size && <span className="text-[0.6rem] text-txt-3 font-mono">{t.size} lots</span>}
-                        {t.followed_strategy ? <span className="text-profit text-[0.6rem]">✓</span> : <span className="text-loss text-[0.6rem]">✗</span>}
+                        <span className="font-semibold text-sm">{t.instrument || '-'}</span>
+                        <span className={`text-[0.68rem] font-semibold font-mono px-1.5 py-0.5 rounded ${t.type === 'LONG' ? 'bg-profit/15 text-profit' : 'bg-loss/15 text-loss'}`}>{t.type}</span>
+                        {t.size && <span className="text-[0.7rem] text-txt-3 font-mono">{t.size} lots</span>}
+                        {t.followed_strategy ? <span className="text-profit text-[0.7rem]">✓</span> : <span className="text-loss text-[0.7rem]">✗</span>}
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <span className={`font-bold font-mono text-sm ${parseFloat(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>
+                        <span className={`font-semibold font-mono text-sm ${parseFloat(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>
                           {parseFloat(t.pnl) >= 0 ? '+' : ''}{fmt(parseFloat(t.pnl))}€
                         </span>
-                        {t.rr != null && <div className={`text-[0.55rem] font-mono ${parseFloat(t.rr) >= 0 ? 'text-profit' : 'text-loss'}`}>{parseFloat(t.rr).toFixed(2)}R</div>}
+                        {t.rr != null && <div className={`text-[0.68rem] font-mono ${parseFloat(t.rr) >= 0 ? 'text-profit' : 'text-loss'}`}>{parseFloat(t.rr).toFixed(2)}R</div>}
                       </div>
                     </div>
                   ))}

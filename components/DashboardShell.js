@@ -4,21 +4,22 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
 import { AccountProvider, useAccount } from './AccountContext';
+import { Logo, LogoMark, Icon } from './Brand';
 
 const menuItems = [
   { label: 'Analytics', items: [
-    { path: '/dashboard', icon: '◈', name: 'Dashboard' },
-    { path: '/trades', icon: '⬡', name: 'Trades' },
-    { path: '/payouts', icon: '◇', name: 'Payouts' },
-    { path: '/statistics', icon: '△', name: 'Stats Compte' },
-    { path: '/global-stats', icon: '◎', name: 'Stats Globales', requiredPlan: ['pro', 'unlimited'] },
-    { path: '/strategies', icon: '◬', name: 'Stratégies' },
-    { path: '/ai-analysis', icon: '✦', name: 'Analyse IA' },
+    { path: '/dashboard', icon: 'dashboard', name: 'Dashboard' },
+    { path: '/trades', icon: 'trades', name: 'Trades' },
+    { path: '/payouts', icon: 'payouts', name: 'Payouts' },
+    { path: '/statistics', icon: 'stats', name: 'Stats Compte' },
+    { path: '/global-stats', icon: 'globe', name: 'Stats Globales', requiredPlan: ['pro', 'unlimited'] },
+    { path: '/strategies', icon: 'strategy', name: 'Stratégies' },
+    { path: '/ai-analysis', icon: 'sparkles', name: 'Analyse IA' },
   ]},
   { label: 'Outils', items: [
-    { path: '/playbook', icon: '▦', name: 'Playbook', requiredPlan: ['pro', 'unlimited'] },
-    { path: '/export', icon: '↓', name: 'Export Excel', requiredPlan: ['unlimited'] },
-    { path: '/account', icon: '◉', name: 'Mon Compte' },
+    { path: '/playbook', icon: 'playbook', name: 'Playbook', requiredPlan: ['pro', 'unlimited'] },
+    { path: '/export', icon: 'download', name: 'Export Excel', requiredPlan: ['unlimited'] },
+    { path: '/account', icon: 'user', name: 'Mon Compte' },
   ]},
 ];
 
@@ -45,8 +46,8 @@ function ThemeToggle() {
     document.documentElement.setAttribute('data-theme', next);
   };
   return (
-    <button onClick={toggle} className="w-9 h-9 bg-bg-card border border-brd rounded-lg flex items-center justify-center text-txt-2 hover:text-txt-1 hover:border-brd-hover transition-all" title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}>
-      {theme === 'dark' ? '☀' : '☾'}
+    <button onClick={toggle} className="icon-btn" title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'} aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}>
+      <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} />
     </button>
   );
 }
@@ -57,7 +58,7 @@ function AccountSelector() {
   if (activeAccounts.length === 0) return null;
   return (
     <select value={currentAccountId || ''} onChange={e => selectAccount(e.target.value)}
-      className="hidden md:block bg-accent-dim border border-accent/15 rounded-full px-3 py-1.5 text-[0.82rem] font-bold focus:outline-none focus:border-accent cursor-pointer">
+      className="hidden md:block bg-bg-card border border-brd hover:border-brd-hover !rounded-full pl-3.5 py-1.5 text-[0.8rem] font-medium text-txt-1 cursor-pointer transition-colors">
       {activeAccounts.map(a => <option key={a.id} value={a.id}>{a.name} — {a.prop_firm}</option>)}
     </select>
   );
@@ -69,7 +70,7 @@ function MobileAccountSelector() {
   if (activeAccounts.length === 0) return null;
   return (
     <select value={currentAccountId || ''} onChange={e => selectAccount(e.target.value)}
-      className="md:hidden bg-accent-dim border border-accent/15 rounded-lg px-2 py-1.5 text-[0.75rem] font-bold focus:outline-none focus:border-accent max-w-[140px] truncate">
+      className="md:hidden bg-bg-card border border-brd pl-2.5 py-1.5 text-[0.75rem] font-medium text-txt-1 max-w-[150px] truncate">
       {activeAccounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
     </select>
   );
@@ -86,14 +87,14 @@ function IOSInstallBanner() {
   const dismiss = () => { setShow(false); localStorage.setItem('ts-pwa-dismissed', '1'); };
   if (!show) return null;
   return (
-    <div className="fixed bottom-20 md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-bg-card border border-accent/30 rounded-xl p-4 shadow-2xl z-[300] animate-fade-up">
-      <button onClick={dismiss} className="absolute top-2 right-3 text-txt-3 text-lg">×</button>
+    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-bg-card border border-brd rounded-2xl p-4 z-[300] animate-fade-up" style={{ boxShadow: 'var(--shadow-pop)' }}>
+      <button onClick={dismiss} className="absolute top-3 right-3 text-txt-3 hover:text-txt-1" aria-label="Fermer"><Icon name="close" size={16} /></button>
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-accent to-purple-400 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0">TS</div>
+        <LogoMark size={40} className="flex-shrink-0" />
         <div>
-          <div className="font-bold text-sm mb-1">Installer TradeScope</div>
+          <div className="font-semibold text-sm mb-1">Installer TradeScope</div>
           <div className="text-txt-2 text-xs leading-relaxed">
-            Tape <span className="inline-block mx-0.5">⬆</span> puis <strong>"Sur l'écran d'accueil"</strong> pour installer l'app
+            Tape <Icon name="share" size={13} className="inline -mt-0.5 mx-0.5" /> puis <strong className="text-txt-1">« Sur l'écran d'accueil »</strong> pour installer l'app
           </div>
         </div>
       </div>
@@ -115,21 +116,20 @@ function TrialBanner({ profile }) {
   const isUrgent = daysLeft <= 2;
 
   return (
-    <div className={`px-3 md:px-7 py-2 border-b flex items-center justify-between gap-3 text-xs ${
-      isUrgent ? 'bg-loss-dim border-loss/30 text-loss' : 'bg-accent-dim border-accent/20 text-accent'
+    <div className={`px-4 md:px-8 py-2 border-b flex items-center justify-between gap-3 text-xs ${
+      isUrgent ? 'bg-loss-dim border-loss/20 text-loss' : 'bg-accent-dim border-accent/15 text-accent'
     }`}>
       <div className="flex items-center gap-3 min-w-0">
-        <span className="flex-shrink-0 font-bold font-mono">
-          {isUrgent ? '⚠' : '⏱'} Jour {daysPassed}/{totalDays} — {daysLeft} jour{daysLeft > 1 ? 's' : ''} restant{daysLeft > 1 ? 's' : ''}
+        <span className="flex-shrink-0 font-medium flex items-center gap-1.5">
+          <Icon name={isUrgent ? 'alert' : 'clock'} size={14} />
+          Essai gratuit · jour {daysPassed}/{totalDays} · {daysLeft} jour{daysLeft > 1 ? 's' : ''} restant{daysLeft > 1 ? 's' : ''}
         </span>
-        <div className="hidden sm:flex items-center gap-2">
-          <div className="w-32 h-1.5 bg-black/20 rounded-full overflow-hidden">
-            <div className={`h-full rounded-full ${isUrgent ? 'bg-loss' : 'bg-accent'}`} style={{ width: `${progress}%` }} />
-          </div>
+        <div className="hidden sm:block w-32 h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'color-mix(in srgb, currentColor 18%, transparent)' }}>
+          <div className={`h-full rounded-full ${isUrgent ? 'bg-loss' : 'bg-accent'}`} style={{ width: `${progress}%` }} />
         </div>
       </div>
-      <Link href="/account" className={`flex-shrink-0 font-bold px-3 py-1 rounded-lg text-white text-xs transition-all ${isUrgent ? 'bg-loss hover:opacity-90' : 'bg-accent hover:opacity-90'}`}>
-        Choisir un plan →
+      <Link href="/account" className={`flex-shrink-0 font-semibold px-3 py-1 rounded-lg text-white text-xs transition-all inline-flex items-center gap-1 ${isUrgent ? 'bg-loss hover:bg-loss/90' : 'bg-accent-strong hover:bg-accent'}`}>
+        Choisir un plan <Icon name="arrowRight" size={12} strokeWidth={2.25} />
       </Link>
     </div>
   );
@@ -164,18 +164,22 @@ function ShellInner({ user, profile, children }) {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99] md:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
-      <aside className={`w-60 bg-sidebar border-r border-brd flex flex-col fixed left-0 top-0 h-screen z-[100] transition-transform duration-300
+      <aside className={`w-64 bg-sidebar border-r border-brd flex flex-col fixed left-0 top-0 h-screen z-[100] transition-transform duration-300
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         
-        <Link href="/" className="p-5 border-b border-brd flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 bg-gradient-to-br from-accent to-purple-400 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-accent-glow">TS</div>
-          <div className="font-display font-bold text-lg tracking-tight">TradeScope <span className="text-txt-2 font-medium text-[0.7rem] ml-1">v2</span></div>
-        </Link>
+        <div className="h-16 px-5 flex items-center justify-between">
+          <Link href="/" className="hover:opacity-80 transition-opacity">
+            <Logo size={28} showVersion />
+          </Link>
+          <button onClick={() => setMobileOpen(false)} className="md:hidden text-txt-3 hover:text-txt-1" aria-label="Fermer le menu">
+            <Icon name="close" size={18} />
+          </button>
+        </div>
 
-        <nav className="flex-1 p-3 overflow-y-auto">
+        <nav className="flex-1 px-3 pt-2 pb-3 overflow-y-auto">
           {menuItems.map((section) => (
-            <div key={section.label} className="mb-5">
-              <div className="text-[0.62rem] text-txt-3 uppercase tracking-[1.5px] font-semibold font-mono px-3 mb-1.5">{section.label}</div>
+            <div key={section.label} className="mb-6">
+              <div className="eyebrow px-3 mb-2">{section.label}</div>
               {section.items.map((item) => {
                 const isTrialing = profile?.subscription_status === 'trialing' &&
                                    profile?.trial_ends_at &&
@@ -185,13 +189,13 @@ function ShellInner({ user, profile, children }) {
                 const active = pathname === item.path;
                 return (
                   <Link key={item.path} href={locked ? '/account' : item.path} onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[0.88rem] font-medium relative transition-all
-                      ${active ? 'bg-accent-dim text-accent font-semibold' : 'text-txt-2 hover:bg-accent-dim hover:text-txt-1'}
-                      ${locked ? 'opacity-40' : ''}`}>
-                    {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-accent rounded-r" />}
-                    <span className="text-[1.05rem] w-[22px] text-center">{item.icon}</span>
+                    className={`group flex items-center gap-3 px-3 py-2 mb-0.5 rounded-xl text-[0.875rem] relative transition-all
+                      ${active ? 'bg-bg-card text-txt-1 font-medium border border-brd' : 'text-txt-2 hover:bg-bg-card-hover hover:text-txt-1 border border-transparent'}
+                      ${locked ? 'opacity-50' : ''}`}
+                    style={active ? { boxShadow: 'var(--shadow-card)' } : undefined}>
+                    <Icon name={item.icon} size={17} className={active ? 'text-accent' : 'text-txt-3 group-hover:text-txt-2 transition-colors'} />
                     <span>{item.name}</span>
-                    {locked && <span className="ml-auto text-[0.6rem] bg-brd px-1.5 py-0.5 rounded text-txt-3">PRO</span>}
+                    {locked && <span className="ml-auto inline-flex items-center gap-1 text-[0.62rem] font-medium text-txt-3 border border-brd px-1.5 py-0.5 rounded-md"><Icon name="lock" size={10} strokeWidth={2} />PRO</span>}
                   </Link>
                 );
               })}
@@ -200,22 +204,28 @@ function ShellInner({ user, profile, children }) {
         </nav>
 
         <div className="p-3 border-t border-brd">
-          <div className="text-[0.62rem] text-txt-3 uppercase tracking-wider font-mono px-3 mb-1.5">
-            Plan: <span className="text-accent capitalize">{profile?.plan || 'Aucun'}</span>
-          </div>
-          <button onClick={handleSignOut} className="w-full text-left px-3 py-2 text-txt-2 hover:text-loss text-[0.85rem] rounded-lg hover:bg-loss-dim transition-all">
-            Deconnexion
+          <Link href="/account" onClick={() => setMobileOpen(false)} className="block rounded-xl border border-brd bg-bg-card p-3 mb-2 hover:border-brd-hover transition-colors">
+            <div className="flex items-center justify-between">
+              <span className="eyebrow">Plan</span>
+              <span className="text-[0.7rem] font-medium text-accent capitalize">{profile?.plan || 'Aucun'}</span>
+            </div>
+            {profile?.plan !== 'unlimited' && (
+              <div className="text-[0.72rem] text-txt-2 mt-1.5 flex items-center gap-1">Débloquer plus d'outils <Icon name="arrowRight" size={11} /></div>
+            )}
+          </Link>
+          <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-3 py-2 text-txt-2 hover:text-loss text-[0.85rem] rounded-xl hover:bg-loss-dim transition-all">
+            <Icon name="logout" size={16} /> Déconnexion
           </button>
         </div>
       </aside>
 
-      <main className="md:ml-60 flex-1 flex flex-col h-screen overflow-hidden w-full min-w-0">
-        <div className="bg-bg-secondary border-b border-brd px-3 md:px-7 py-3 flex justify-between items-center min-h-[58px] gap-2">
+      <main className="md:ml-64 flex-1 flex flex-col h-screen overflow-hidden w-full min-w-0">
+        <div className="bg-bg-primary/80 backdrop-blur-xl border-b border-brd px-3 md:px-8 flex justify-between items-center h-16 gap-2">
           <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-shrink">
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-9 h-9 bg-bg-card border border-brd rounded-lg flex items-center justify-center text-txt-1 flex-shrink-0">
-              ☰
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden icon-btn flex-shrink-0" aria-label="Ouvrir le menu">
+              <Icon name="menu" size={18} />
             </button>
-            <h1 className="text-base md:text-lg font-bold font-display tracking-tight truncate">
+            <h1 className="text-base md:text-[1.15rem] font-semibold font-display tracking-tight truncate">
               {menuItems.flatMap(s => s.items).find(i => i.path === pathname)?.name || 'Dashboard'}
             </h1>
             <AccountSelector />
@@ -226,33 +236,33 @@ function ShellInner({ user, profile, children }) {
             <ThemeToggle />
             <div className="relative" ref={dropdownRef}>
               <button onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 px-1.5 py-1.5 rounded-xl hover:bg-bg-card border border-transparent hover:border-brd transition-all">
-                <div className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-br from-accent to-purple-500 rounded-full flex items-center justify-center text-white text-xs md:text-sm font-bold shadow-lg shadow-accent-glow flex-shrink-0">
+                className="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-xl hover:bg-bg-card border border-transparent hover:border-brd transition-all">
+                <div className="w-8 h-8 bg-gradient-to-br from-[#9C8CFF] to-[#5B3FF0] rounded-full flex items-center justify-center text-white text-xs font-semibold ring-2 ring-bg-primary flex-shrink-0">
                   {initials}
                 </div>
                 <div className="hidden md:block text-right">
-                  <div className="text-[0.82rem] font-semibold leading-tight truncate max-w-[140px]">{profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0]}</div>
-                  <div className="text-[0.62rem] text-txt-3 font-mono uppercase tracking-wider">
+                  <div className="text-[0.82rem] font-medium leading-tight truncate max-w-[140px]">{profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0]}</div>
+                  <div className="text-[0.68rem] text-txt-3">
                     {profile?.subscription_status === 'trialing' ? 'Essai gratuit' : profile?.plan?.toUpperCase() || 'GRATUIT'}
                   </div>
                 </div>
-                <svg className={`w-3 h-3 text-txt-3 transition-transform hidden md:block ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                <Icon name="chevronDown" size={14} className={`text-txt-3 transition-transform hidden md:block ${dropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-bg-card border border-brd rounded-xl shadow-2xl shadow-black/40 overflow-hidden z-50 animate-fade-up">
+                <div className="absolute right-0 top-full mt-2 w-60 bg-bg-card rounded-2xl overflow-hidden z-50 animate-fade-up" style={{ boxShadow: 'var(--shadow-pop)' }}>
                   <div className="p-3 border-b border-brd">
-                    <div className="text-sm font-semibold truncate">{user.email}</div>
-                    <div className="text-[0.7rem] text-txt-3 font-mono mt-0.5">Plan {profile?.plan?.toUpperCase() || 'AUCUN'}</div>
+                    <div className="text-sm font-medium truncate">{user.email}</div>
+                    <div className="text-[0.72rem] text-txt-3 mt-0.5">Plan <span className="capitalize">{profile?.plan || 'aucun'}</span></div>
                   </div>
                   <div className="p-1.5">
                     <Link href="/account" onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-txt-2 hover:bg-accent-dim hover:text-txt-1 transition-all">
-                      <span>◉</span> Mon Compte
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-txt-2 hover:bg-bg-card-hover hover:text-txt-1 transition-all">
+                      <Icon name="user" size={16} /> Mon compte
                     </Link>
                     <button onClick={handleSignOut}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-loss hover:bg-loss-dim transition-all text-left">
-                      <span>↗</span> Deconnexion
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-loss hover:bg-loss-dim transition-all text-left">
+                      <Icon name="logout" size={16} /> Déconnexion
                     </button>
                   </div>
                 </div>
@@ -263,8 +273,10 @@ function ShellInner({ user, profile, children }) {
 
         <TrialBanner profile={profile} />
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-6">
-          {children}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 md:px-8 md:py-7">
+          <div className="max-w-[1400px] mx-auto">
+            {children}
+          </div>
         </div>
       </main>
       <IOSInstallBanner />

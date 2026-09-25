@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import EquityCurve from '@/components/EquityCurve';
+import { PageLoader } from '@/components/Brand';
 
 export default function GlobalStatsPage() {
   const [trades, setTrades] = useState([]);
@@ -66,7 +67,7 @@ export default function GlobalStatsPage() {
     return { ...a, pnl: ap, trades: atr.length, wr: awr, capital: cap };
   }).sort((a, b) => b.pnl - a.pnl);
 
-  if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
+  if (loading) return <PageLoader />;
 
   return (
     <div className="animate-fade-up">
@@ -79,9 +80,9 @@ export default function GlobalStatsPage() {
           { label: 'R:R Moyen', value: avgRR ? `${avgRR}R` : '—', sub: `${rrTrades.length} trades`, color: avgRR >= 0 ? 'text-profit' : 'text-loss' },
           { label: 'Meilleur Compte', value: accountStats[0]?.name || '—', sub: accountStats[0] ? fmt(accountStats[0].pnl) : '', color: accountStats[0]?.pnl >= 0 ? 'text-profit' : 'text-loss' },
         ].map(m => (
-          <div key={m.label} className="relative bg-bg-card border border-brd rounded-xl p-4 transition-all hover:border-brd-hover overflow-hidden metric-glow">
-            <div className="text-[0.68rem] text-txt-3 uppercase tracking-[1.2px] font-semibold font-mono mb-3">{m.label}</div>
-            <div className={`text-xl font-bold font-display tracking-tight mb-1 ${m.color}`}>{m.value}</div>
+          <div key={m.label} className="relative card p-4 transition-all hover:border-brd-hover overflow-hidden metric-glow">
+            <div className="eyebrow mb-3">{m.label}</div>
+            <div className={`text-xl font-semibold font-display tracking-tight mb-1 ${m.color}`}>{m.value}</div>
             <div className={`text-[0.78rem] font-medium ${m.label === 'Meilleur Compte' ? m.color : 'text-txt-2'}`}>{m.sub}</div>
           </div>
         ))}
@@ -89,8 +90,8 @@ export default function GlobalStatsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Global Equity Curve */}
-        <div className="bg-bg-card border border-brd rounded-xl p-5 lg:col-span-2">
-          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-3">Courbe de Progression Globale</h3>
+        <div className="card p-5 lg:col-span-2">
+          <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-3">Courbe de Progression Globale</h3>
           <EquityCurve trades={at} baseCapital={activeAccounts.reduce((s, a) => s + parseFloat(a.base_capital), 0)} height={220} />
         </div>
 
@@ -99,17 +100,17 @@ export default function GlobalStatsPage() {
           const accTrades = at.filter(t => t.account_id === a.id);
           if (accTrades.length < 2) return null;
           return (
-            <div key={a.id} className="bg-bg-card border border-brd rounded-xl p-5">
-              <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1">{a.name}</h3>
-              <div className="text-[0.55rem] text-txt-3 font-mono mb-3">{a.prop_firm}</div>
+            <div key={a.id} className="card p-5">
+              <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-1">{a.name}</h3>
+              <div className="text-[0.68rem] text-txt-3 font-mono mb-3">{a.prop_firm}</div>
               <EquityCurve trades={accTrades} baseCapital={parseFloat(a.base_capital)} height={160} />
             </div>
           );
         })}
 
         {/* Day performance - detailed */}
-        <div className="bg-bg-card border border-brd rounded-xl p-5 lg:col-span-2">
-          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">Performance par Jour (Global)</h3>
+        <div className="card p-5 lg:col-span-2">
+          <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-4">Performance par Jour (Global)</h3>
           
           {activeDays.length > 0 ? (
             <>
@@ -117,16 +118,16 @@ export default function GlobalStatsPage() {
               {dayRanking.length >= 2 && (
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   <div className="bg-profit/10 border border-profit/20 rounded-lg p-3 text-center">
-                    <div className="text-[0.55rem] text-profit font-mono font-bold uppercase tracking-wider mb-1">🏆 Meilleur jour</div>
-                    <div className="font-display font-bold text-lg">{dayRanking[0]}</div>
-                    <div className="text-profit font-mono font-bold text-sm">{fmt(dayStats[dayRanking[0]].pnl)}</div>
-                    <div className="text-txt-2 text-[0.65rem] mt-0.5">{dayStats[dayRanking[0]].trades} trades · {dayStats[dayRanking[0]].trades > 0 ? ((dayStats[dayRanking[0]].wins / dayStats[dayRanking[0]].trades) * 100).toFixed(0) : 0}% WR</div>
+                    <div className="text-[0.68rem] text-profit font-mono font-semibold uppercase tracking-wider mb-1">🏆 Meilleur jour</div>
+                    <div className="font-display font-semibold text-lg">{dayRanking[0]}</div>
+                    <div className="text-profit font-mono font-semibold text-sm">{fmt(dayStats[dayRanking[0]].pnl)}</div>
+                    <div className="text-txt-2 text-[0.72rem] mt-0.5">{dayStats[dayRanking[0]].trades} trades · {dayStats[dayRanking[0]].trades > 0 ? ((dayStats[dayRanking[0]].wins / dayStats[dayRanking[0]].trades) * 100).toFixed(0) : 0}% WR</div>
                   </div>
                   <div className="bg-loss/10 border border-loss/20 rounded-lg p-3 text-center">
-                    <div className="text-[0.55rem] text-loss font-mono font-bold uppercase tracking-wider mb-1">⚠️ Pire jour</div>
-                    <div className="font-display font-bold text-lg">{dayRanking[dayRanking.length - 1]}</div>
-                    <div className="text-loss font-mono font-bold text-sm">{fmt(dayStats[dayRanking[dayRanking.length - 1]].pnl)}</div>
-                    <div className="text-txt-2 text-[0.65rem] mt-0.5">{dayStats[dayRanking[dayRanking.length - 1]].trades} trades · {dayStats[dayRanking[dayRanking.length - 1]].trades > 0 ? ((dayStats[dayRanking[dayRanking.length - 1]].wins / dayStats[dayRanking[dayRanking.length - 1]].trades) * 100).toFixed(0) : 0}% WR</div>
+                    <div className="text-[0.68rem] text-loss font-mono font-semibold uppercase tracking-wider mb-1">⚠️ Pire jour</div>
+                    <div className="font-display font-semibold text-lg">{dayRanking[dayRanking.length - 1]}</div>
+                    <div className="text-loss font-mono font-semibold text-sm">{fmt(dayStats[dayRanking[dayRanking.length - 1]].pnl)}</div>
+                    <div className="text-txt-2 text-[0.72rem] mt-0.5">{dayStats[dayRanking[dayRanking.length - 1]].trades} trades · {dayStats[dayRanking[dayRanking.length - 1]].trades > 0 ? ((dayStats[dayRanking[dayRanking.length - 1]].wins / dayStats[dayRanking[dayRanking.length - 1]].trades) * 100).toFixed(0) : 0}% WR</div>
                   </div>
                 </div>
               )}
@@ -141,7 +142,7 @@ export default function GlobalStatsPage() {
                       <div className="flex-1 h-6 bg-bg-secondary rounded overflow-hidden">
                         <div className="h-full rounded transition-all" style={{ width: `${(Math.abs(dayStats[d].pnl) / maxDayPnl) * 100}%`, background: dayStats[d].pnl >= 0 ? 'var(--profit)' : 'var(--loss, #EF4444)' }} />
                       </div>
-                      <span className={`text-xs font-mono font-bold w-16 text-right ${dayStats[d].pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                      <span className={`text-xs font-mono font-semibold w-16 text-right ${dayStats[d].pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
                         {dayStats[d].pnl >= 0 ? '+' : ''}{dayStats[d].pnl.toFixed(0)}€
                       </span>
                     </div>
@@ -150,7 +151,7 @@ export default function GlobalStatsPage() {
 
                 {/* Detail table */}
                 <div>
-                  <div className="grid grid-cols-5 gap-1 text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider mb-2 px-2">
+                  <div className="grid grid-cols-5 gap-1 eyebrow mb-2 px-2">
                     <span>Jour</span><span className="text-center">Trades</span><span className="text-center">WR</span><span className="text-center">Moy/trade</span><span className="text-right">P&L</span>
                   </div>
                   <div className="space-y-1">
@@ -160,11 +161,11 @@ export default function GlobalStatsPage() {
                       const avg = s.trades > 0 ? s.pnl / s.trades : 0;
                       return (
                         <div key={d} className={`grid grid-cols-5 gap-1 items-center px-2 py-2 rounded-lg text-sm ${i === 0 ? 'bg-profit/10 border border-profit/15' : i === dayRanking.length - 1 ? 'bg-loss/10 border border-loss/15' : 'bg-bg-secondary'}`}>
-                          <span className="font-bold text-xs">{d.substring(0, 3)}</span>
+                          <span className="font-semibold text-xs">{d.substring(0, 3)}</span>
                           <span className="text-center font-mono text-xs">{s.trades}</span>
-                          <span className={`text-center font-mono font-bold text-xs ${wr >= 50 ? 'text-profit' : 'text-loss'}`}>{wr}%</span>
+                          <span className={`text-center font-mono font-semibold text-xs ${wr >= 50 ? 'text-profit' : 'text-loss'}`}>{wr}%</span>
                           <span className={`text-center font-mono text-xs ${avg >= 0 ? 'text-profit' : 'text-loss'}`}>{avg >= 0 ? '+' : ''}{avg.toFixed(0)}€</span>
-                          <span className={`text-right font-mono font-bold text-xs ${s.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{s.pnl >= 0 ? '+' : ''}{s.pnl.toFixed(0)}€</span>
+                          <span className={`text-right font-mono font-semibold text-xs ${s.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{s.pnl >= 0 ? '+' : ''}{s.pnl.toFixed(0)}€</span>
                         </div>
                       );
                     })}
@@ -178,18 +179,18 @@ export default function GlobalStatsPage() {
         </div>
 
         {/* Account comparison */}
-        <div className="bg-bg-card border border-brd rounded-xl p-5">
-          <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">Comparaison Comptes</h3>
+        <div className="card p-5">
+          <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-4">Comparaison Comptes</h3>
           <div className="space-y-3">
             {accountStats.map(a => (
               <div key={a.id} className="bg-bg-secondary border border-brd rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <div className="font-bold font-display">{a.name} {a.is_burned && <span className="text-[0.6rem] bg-loss text-white px-1.5 py-0.5 rounded ml-1">GRILLÉ</span>}</div>
+                    <div className="font-semibold font-display">{a.name} {a.is_burned && <span className="text-[0.7rem] bg-loss text-white px-1.5 py-0.5 rounded ml-1">GRILLÉ</span>}</div>
                     <div className="text-txt-2 text-xs">{a.prop_firm}</div>
                   </div>
                   <div className="text-right">
-                    <div className={`text-lg font-bold font-display ${a.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{a.pnl >= 0 ? '+' : ''}{fmt(a.pnl)}</div>
+                    <div className={`text-lg font-semibold font-display ${a.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{a.pnl >= 0 ? '+' : ''}{fmt(a.pnl)}</div>
                     <div className="text-xs text-txt-2">{fmt(a.capital)}</div>
                   </div>
                 </div>

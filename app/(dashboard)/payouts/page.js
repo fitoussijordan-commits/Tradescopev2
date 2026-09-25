@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { useAccount } from '@/components/AccountContext';
+import { PageLoader } from '@/components/Brand';
 
 export default function PayoutsPage() {
   const { accounts, currentAccount, currentAccountId } = useAccount();
@@ -42,30 +43,30 @@ export default function PayoutsPage() {
   const totalPayouts = payouts.reduce((s, t) => s + Math.abs(parseFloat(t.pnl)), 0);
   const fmt = (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(v);
 
-  if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
+  if (loading) return <PageLoader />;
 
   return (
     <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-5">
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="bg-bg-card border border-brd rounded-xl px-4 py-2">
-            <span className="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider">Total retiré</span>
-            <div className="text-lg font-bold font-display text-amber-400">{fmt(totalPayouts)}</div>
+          <div className="card px-4 py-2">
+            <span className="eyebrow">Total retiré</span>
+            <div className="text-lg font-semibold font-display text-warn">{fmt(totalPayouts)}</div>
           </div>
         </div>
-        <button onClick={() => setShowModal(true)} className="px-5 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-lg active:scale-95 transition-all">+ Payout</button>
+        <button onClick={() => setShowModal(true)} className="px-5 py-2.5 bg-warn text-white text-sm font-semibold rounded-lg active:scale-95 transition-all">+ Payout</button>
       </div>
 
       <div className="space-y-3">
         {payouts.map(t => (
-          <div key={t.id} className="bg-bg-card border border-brd rounded-xl p-4">
+          <div key={t.id} className="card p-4">
             <div className="flex justify-between items-start">
               <div>
-                <div className="text-amber-400 text-lg font-bold font-mono">{fmt(Math.abs(parseFloat(t.pnl)))}</div>
+                <div className="text-warn text-lg font-semibold font-mono">{fmt(Math.abs(parseFloat(t.pnl)))}</div>
                 <div className="text-[0.78rem] text-txt-2 font-mono mt-0.5">{new Date(t.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</div>
                 {t.notes && <div className="text-txt-2 text-xs mt-2">{t.notes}</div>}
               </div>
-              <button onClick={(e) => deletePayout(e, t.id)} className={'px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 ' + (deleting === t.id ? 'bg-loss text-white' : 'text-txt-3 border border-brd')}>{deleting === t.id ? 'Confirmer ?' : '×'}</button>
+              <button onClick={(e) => deletePayout(e, t.id)} className={'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95 ' + (deleting === t.id ? 'bg-loss text-white' : 'text-txt-3 border border-brd')}>{deleting === t.id ? 'Confirmer ?' : '×'}</button>
             </div>
           </div>
         ))}
@@ -74,14 +75,14 @@ export default function PayoutsPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-bg-card border border-brd rounded-xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
-            <h2 className="font-display font-bold text-lg mb-5">Nouveau Payout</h2>
+          <div className="card p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <h2 className="font-display font-semibold text-lg mb-5">Nouveau Payout</h2>
             <form onSubmit={addPayout} className="space-y-4">
-              <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Date</label><input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
-              <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Montant (€)</label><input type="number" step="0.01" value={form.pnl} onChange={e => setForm({...form, pnl: e.target.value})} required placeholder="500.00" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
-              <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Notes</label><input type="text" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="Raison du retrait..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+              <div><label className="field-label">Date</label><input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+              <div><label className="field-label">Montant (€)</label><input type="number" step="0.01" value={form.pnl} onChange={e => setForm({...form, pnl: e.target.value})} required placeholder="500.00" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+              <div><label className="field-label">Notes</label><input type="text" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="Raison du retrait..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
               <div className="flex gap-3 pt-2">
-                <button type="submit" className="flex-1 bg-amber-500 text-white font-bold py-3 rounded-lg text-sm active:scale-95 transition-all">Ajouter</button>
+                <button type="submit" className="flex-1 bg-warn text-white font-semibold py-3 rounded-lg text-sm active:scale-95 transition-all">Ajouter</button>
                 <button type="button" onClick={() => setShowModal(false)} className="px-6 py-3 border border-brd text-txt-2 rounded-lg text-sm active:scale-95">Annuler</button>
               </div>
             </form>

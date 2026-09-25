@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { useAccount } from '@/components/AccountContext';
+import { PageLoader } from '@/components/Brand';
 
 export default function TradesPage() {
   const { accounts, currentAccount, currentAccountId } = useAccount();
@@ -258,7 +259,7 @@ export default function TradesPage() {
   };
 
   const fmt = (v) => (parseFloat(v) >= 0 ? '+' : '') + parseFloat(v).toFixed(2) + '€';
-  if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
+  if (loading) return <PageLoader />;
 
   return (
     <div className="animate-fade-up">
@@ -266,60 +267,60 @@ export default function TradesPage() {
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex gap-1.5 overflow-x-auto">
             {[['all','Tout'],['month','Mois'],['week','Semaine'],['wins','Wins'],['losses','Losses']].map(([k,l]) => (
-              <button key={k} onClick={() => setFilter(k)} className={'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ' + (filter === k ? 'bg-accent text-white' : 'bg-bg-card border border-brd text-txt-2')}>{l}</button>
+              <button key={k} onClick={() => setFilter(k)} className={'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ' + (filter === k ? 'bg-accent-strong hover:bg-accent text-white' : 'bg-bg-card border border-brd text-txt-2')}>{l}</button>
             ))}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowImport(true)} className="px-4 py-2.5 bg-bg-card border border-brd text-txt-2 text-sm font-semibold rounded-lg hover:border-accent hover:text-accent transition-all active:scale-95">↑ Import</button>
-          <button onClick={() => setShowModal(true)} className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-lg shadow-lg shadow-accent/25 active:scale-95 transition-all">+ Trade</button>
+          <button onClick={() => setShowModal(true)} className="px-5 py-2.5 bg-accent-strong hover:bg-accent text-white text-sm font-semibold rounded-lg shadow-lg shadow-accent/25 active:scale-95 transition-all">+ Trade</button>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-5">
-        <div className="bg-bg-card border border-brd rounded-xl p-3 text-center">
-          <div className="text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-1">Trades</div>
-          <div className="text-lg font-bold font-display">{filtered.length}</div>
+        <div className="card p-3 text-center">
+          <div className="eyebrow mb-1">Trades</div>
+          <div className="text-lg font-semibold font-display">{filtered.length}</div>
         </div>
-        <div className="bg-bg-card border border-brd rounded-xl p-3 text-center">
-          <div className="text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-1">P&L</div>
-          <div className={'text-lg font-bold font-display font-mono ' + (filtered.reduce((s,t) => s + parseFloat(t.pnl), 0) >= 0 ? 'text-profit' : 'text-loss')}>{fmt(filtered.reduce((s,t) => s + parseFloat(t.pnl), 0))}</div>
+        <div className="card p-3 text-center">
+          <div className="eyebrow mb-1">P&L</div>
+          <div className={'text-lg font-semibold font-display font-mono ' + (filtered.reduce((s,t) => s + parseFloat(t.pnl), 0) >= 0 ? 'text-profit' : 'text-loss')}>{fmt(filtered.reduce((s,t) => s + parseFloat(t.pnl), 0))}</div>
         </div>
-        <div className="bg-bg-card border border-brd rounded-xl p-3 text-center">
-          <div className="text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-1">Win Rate</div>
-          <div className={'text-lg font-bold font-display ' + (filtered.length > 0 && (filtered.filter(t=>t.pnl>0).length / filtered.length * 100) >= 50 ? 'text-profit' : 'text-loss')}>{filtered.length > 0 ? (filtered.filter(t=>t.pnl>0).length / filtered.length * 100).toFixed(0) : 0}%</div>
+        <div className="card p-3 text-center">
+          <div className="eyebrow mb-1">Win Rate</div>
+          <div className={'text-lg font-semibold font-display ' + (filtered.length > 0 && (filtered.filter(t=>t.pnl>0).length / filtered.length * 100) >= 50 ? 'text-profit' : 'text-loss')}>{filtered.length > 0 ? (filtered.filter(t=>t.pnl>0).length / filtered.length * 100).toFixed(0) : 0}%</div>
         </div>
       </div>
 
       <div className="space-y-3">
         {filtered.map(t => (
-          <div key={t.id} className="bg-bg-card border border-brd rounded-xl p-4">
+          <div key={t.id} className="card p-4">
             <div className="flex justify-between items-start mb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold">{t.instrument || '-'}</span>
-                  <span className={'inline-block px-2 py-0.5 rounded text-[0.6rem] font-bold uppercase font-mono ' + (t.type === 'LONG' ? 'bg-profit-dim text-profit' : 'bg-loss-dim text-loss')}>{t.type}</span>
+                  <span className="font-semibold">{t.instrument || '-'}</span>
+                  <span className={'inline-block px-2 py-0.5 rounded text-[0.7rem] font-semibold uppercase font-mono ' + (t.type === 'LONG' ? 'bg-profit-dim text-profit' : 'bg-loss-dim text-loss')}>{t.type}</span>
                   {t.followed_strategy && <span className="text-profit text-xs">✓</span>}
-                  {t.strategies && <span className="text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono" style={{backgroundColor: t.strategies.color + '25', color: t.strategies.color}}>▦ {t.strategies.name}</span>}
-                  {t.session && <span className={`text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono ${t.session === 'london' ? 'bg-blue-500/15 text-blue-400' : 'bg-amber-500/15 text-amber-400'}`}>{t.session === 'london' ? '🇬🇧 AM' : '🇺🇸 PM'}</span>}
+                  {t.strategies && <span className="text-[0.68rem] font-semibold px-1.5 py-0.5 rounded font-mono" style={{backgroundColor: t.strategies.color + '25', color: t.strategies.color}}>▦ {t.strategies.name}</span>}
+                  {t.session && <span className={`text-[0.68rem] font-semibold px-1.5 py-0.5 rounded font-mono ${t.session === 'london' ? 'bg-accent/15 text-accent' : 'bg-warn/15 text-warn'}`}>{t.session === 'london' ? '🇬🇧 AM' : '🇺🇸 PM'}</span>}
                 </div>
                 <div className="text-[0.78rem] text-txt-2 font-mono mt-0.5">{new Date(t.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
               </div>
               <div className="text-right">
-                <div className={'text-lg font-bold font-mono ' + (t.pnl >= 0 ? 'text-profit' : 'text-loss')}>{fmt(t.pnl)}</div>
+                <div className={'text-lg font-semibold font-mono ' + (t.pnl >= 0 ? 'text-profit' : 'text-loss')}>{fmt(t.pnl)}</div>
                 {t.pnl_percent && <div className={'text-[0.7rem] font-mono ' + (t.pnl >= 0 ? 'text-profit' : 'text-loss')}>{parseFloat(t.pnl_percent).toFixed(2)}%</div>}
               </div>
             </div>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex gap-3 text-xs flex-wrap">
-                {t.risk && <span><span className="text-txt-3">Risque</span> <span className="text-amber-400 font-mono font-bold">{parseFloat(t.risk).toFixed(0)}€</span></span>}
-                {t.rr != null && <span><span className="text-txt-3">R:R</span> <span className={'font-mono font-bold ' + (t.rr >= 0 ? 'text-profit' : 'text-loss')}>{parseFloat(t.rr).toFixed(2)}R</span></span>}
+                {t.risk && <span><span className="text-txt-3">Risque</span> <span className="text-warn font-mono font-semibold">{parseFloat(t.risk).toFixed(0)}€</span></span>}
+                {t.rr != null && <span><span className="text-txt-3">R:R</span> <span className={'font-mono font-semibold ' + (t.rr >= 0 ? 'text-profit' : 'text-loss')}>{parseFloat(t.rr).toFixed(2)}R</span></span>}
                 {t.size && <span><span className="text-txt-3">Taille</span> <span className="font-mono">{t.size}</span></span>}
               </div>
               <div className="flex items-center gap-2">
-                {t.trading_view_link && <a href={t.trading_view_link} target="_blank" rel="noopener" className="text-accent text-xs font-bold px-2 py-1 border border-accent/30 rounded">↗</a>}
+                {t.trading_view_link && <a href={t.trading_view_link} target="_blank" rel="noopener" className="text-accent text-xs font-semibold px-2 py-1 border border-accent/30 rounded">↗</a>}
                 <button onClick={() => openEdit(t)} className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-brd text-txt-2 hover:border-accent hover:text-accent transition-all">✎</button>
-                <button onClick={(e) => deleteTrade(e, t.id)} className={'px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 ' + (deleting === t.id ? 'bg-loss text-white' : 'text-txt-3 border border-brd')}>{deleting === t.id ? 'Confirmer ?' : '×'}</button>
+                <button onClick={(e) => deleteTrade(e, t.id)} className={'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95 ' + (deleting === t.id ? 'bg-loss text-white' : 'text-txt-3 border border-brd')}>{deleting === t.id ? 'Confirmer ?' : '×'}</button>
               </div>
             </div>
             {t.notes && <div className="mt-2 pt-2 border-t border-brd text-txt-2 text-xs">{t.notes}</div>}
@@ -330,26 +331,26 @@ export default function TradesPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-bg-card border border-brd rounded-xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h2 className="font-display font-bold text-lg mb-5">Nouveau Trade</h2>
+          <div className="card p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h2 className="font-display font-semibold text-lg mb-5">Nouveau Trade</h2>
             <form onSubmit={addTrade} className="space-y-4">
               <div className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border border-brd">
                 <input type="checkbox" id="isPayout" checked={form.is_payout} onChange={e => setForm({...form, is_payout: e.target.checked})} className="accent-accent w-4 h-4" />
                 <label htmlFor="isPayout" className="text-sm font-semibold">Mode Payout</label>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Date</label><input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+                <div><label className="field-label">Date</label><input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono">{form.balanceMode ? 'Solde compte (€)' : 'P&L (€)'}</label>
+                    <label className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono">{form.balanceMode ? 'Solde compte (€)' : 'P&L (€)'}</label>
                     <button type="button" onClick={() => setForm({...form, balanceMode: !form.balanceMode, pnl: '', balance: ''})}
-                      className="text-[0.55rem] font-bold text-accent hover:underline">{form.balanceMode ? '→ Mode P&L' : '→ Mode Solde'}</button>
+                      className="text-[0.68rem] font-semibold text-accent hover:underline">{form.balanceMode ? '→ Mode P&L' : '→ Mode Solde'}</button>
                   </div>
                   {form.balanceMode ? (
                     <div>
                       <input type="number" step="0.01" value={form.balance} onChange={e => setForm({...form, balance: e.target.value})} required placeholder={currentCapital.toFixed(2)} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" />
                       {form.balance !== '' && computedPnl !== null && (
-                        <div className={`mt-1.5 text-xs font-mono font-bold ${computedPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                        <div className={`mt-1.5 text-xs font-mono font-semibold ${computedPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
                           P&L calculé : {computedPnl >= 0 ? '+' : ''}{computedPnl.toFixed(2)}€
                         </div>
                       )}
@@ -361,27 +362,27 @@ export default function TradesPage() {
               </div>
               {!form.is_payout && (<>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Instrument</label><select value={form.instrument} onChange={e => setForm({...form, instrument: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">{['NQ','ES','MNQ','MES','YM','RTY','CL','GC'].map(i => <option key={i}>{i}</option>)}</select></div>
-                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Type</label><select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent"><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select></div>
+                  <div><label className="field-label">Instrument</label><select value={form.instrument} onChange={e => setForm({...form, instrument: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">{['NQ','ES','MNQ','MES','YM','RTY','CL','GC'].map(i => <option key={i}>{i}</option>)}</select></div>
+                  <div><label className="field-label">Type</label><select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent"><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Taille</label><input type="number" step="0.01" value={form.size} onChange={e => setForm({...form, size: e.target.value})} placeholder="1.00" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
-                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Risque (€)</label><input type="number" step="0.01" value={form.risk} onChange={e => setForm({...form, risk: e.target.value})} placeholder="250" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+                  <div><label className="field-label">Taille</label><input type="number" step="0.01" value={form.size} onChange={e => setForm({...form, size: e.target.value})} placeholder="1.00" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+                  <div><label className="field-label">Risque (€)</label><input type="number" step="0.01" value={form.risk} onChange={e => setForm({...form, risk: e.target.value})} placeholder="250" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
                 </div>
-                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Lien TradingView</label><input type="url" value={form.trading_view_link} onChange={e => setForm({...form, trading_view_link: e.target.value})} placeholder="https://..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
+                <div><label className="field-label">Lien TradingView</label><input type="url" value={form.trading_view_link} onChange={e => setForm({...form, trading_view_link: e.target.value})} placeholder="https://..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
                 <div className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border border-brd"><input type="checkbox" id="strategy" checked={form.followed_strategy} onChange={e => setForm({...form, followed_strategy: e.target.checked})} className="accent-accent w-4 h-4" /><label htmlFor="strategy" className="text-sm">Stratégie respectée</label></div>
-                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Session</label>
+                <div><label className="field-label">Session</label>
                   <div className="flex gap-2">
                     {[['','Aucune'],['london','🇬🇧 Londres AM'],['us','🇺🇸 US PM']].map(([v,l]) => (
                       <button key={v} type="button" onClick={() => setForm({...form, session: v})}
-                        className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-95 ${form.session === v ? 'bg-accent text-white' : 'bg-bg-secondary border border-brd text-txt-2 hover:border-accent'}`}>{l}</button>
+                        className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-95 ${form.session === v ? 'bg-accent-strong hover:bg-accent text-white' : 'bg-bg-secondary border border-brd text-txt-2 hover:border-accent'}`}>{l}</button>
                     ))}
                   </div>
                 </div>
               </>)}
               {!form.is_payout && strategies.length > 0 && (
                 <div>
-                  <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Stratégie</label>
+                  <label className="field-label">Stratégie</label>
                   <select value={form.strategy_id} onChange={e => setForm({...form, strategy_id: e.target.value})}
                     className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">
                     <option value="">Hors stratégie</option>
@@ -389,9 +390,9 @@ export default function TradesPage() {
                   </select>
                 </div>
               )}
-              <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Notes</label><textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows="2" placeholder="Notes..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent resize-none" /></div>
+              <div><label className="field-label">Notes</label><textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows="2" placeholder="Notes..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent resize-none" /></div>
               <div className="flex gap-3 pt-2">
-                <button type="submit" className="flex-1 bg-accent text-white font-bold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all">Ajouter</button>
+                <button type="submit" className="flex-1 bg-accent-strong hover:bg-accent text-white font-semibold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all">Ajouter</button>
                 <button type="button" onClick={() => setShowModal(false)} className="px-6 py-3 border border-brd text-txt-2 rounded-lg text-sm active:scale-95">Annuler</button>
               </div>
             </form>
@@ -401,55 +402,55 @@ export default function TradesPage() {
 
       {editModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={() => setEditModal(null)}>
-          <div className="bg-bg-card border border-brd rounded-xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h2 className="font-display font-bold text-lg mb-5">Modifier le trade</h2>
+          <div className="card p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h2 className="font-display font-semibold text-lg mb-5">Modifier le trade</h2>
             <form onSubmit={saveEdit} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Date</label>
+                <div><label className="field-label">Date</label>
                   <input type="date" value={editForm.date} onChange={e => setEditForm({...editForm, date: e.target.value})} required className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
-                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">P&L (€)</label>
+                <div><label className="field-label">P&L (€)</label>
                   <input type="number" step="0.01" value={editForm.pnl} onChange={e => setEditForm({...editForm, pnl: e.target.value})} required className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
               </div>
               {!editModal.is_payout && (<>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Instrument</label>
+                  <div><label className="field-label">Instrument</label>
                     <select value={editForm.instrument} onChange={e => setEditForm({...editForm, instrument: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">
                       {['NQ','ES','MNQ','MES','YM','RTY','CL','GC'].map(i => <option key={i}>{i}</option>)}
                     </select></div>
-                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Type</label>
+                  <div><label className="field-label">Type</label>
                     <select value={editForm.type} onChange={e => setEditForm({...editForm, type: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">
                       <option value="LONG">LONG</option><option value="SHORT">SHORT</option>
                     </select></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Taille</label>
+                  <div><label className="field-label">Taille</label>
                     <input type="number" step="0.01" value={editForm.size} onChange={e => setEditForm({...editForm, size: e.target.value})} placeholder="1.00" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
-                  <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Risque (€)</label>
+                  <div><label className="field-label">Risque (€)</label>
                     <input type="number" step="0.01" value={editForm.risk} onChange={e => setEditForm({...editForm, risk: e.target.value})} placeholder="250" className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
                 </div>
-                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Stratégie</label>
+                <div><label className="field-label">Stratégie</label>
                   <select value={editForm.strategy_id} onChange={e => setEditForm({...editForm, strategy_id: e.target.value})} className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent">
                     <option value="">Hors stratégie</option>
                     {strategies.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select></div>
-                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Session</label>
+                <div><label className="field-label">Session</label>
                   <div className="flex gap-2">
                     {[['','Aucune'],['london','🇬🇧 Londres AM'],['us','🇺🇸 US PM']].map(([v,l]) => (
                       <button key={v} type="button" onClick={() => setEditForm({...editForm, session: v})}
-                        className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${editForm.session === v ? 'bg-accent text-white' : 'bg-bg-secondary border border-brd text-txt-2 hover:border-accent'}`}>{l}</button>
+                        className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${editForm.session === v ? 'bg-accent-strong hover:bg-accent text-white' : 'bg-bg-secondary border border-brd text-txt-2 hover:border-accent'}`}>{l}</button>
                     ))}
                   </div></div>
-                <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Lien TradingView</label>
+                <div><label className="field-label">Lien TradingView</label>
                   <input type="url" value={editForm.trading_view_link} onChange={e => setEditForm({...editForm, trading_view_link: e.target.value})} placeholder="https://..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent" /></div>
                 <div className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border border-brd">
                   <input type="checkbox" id="editStrat" checked={editForm.followed_strategy} onChange={e => setEditForm({...editForm, followed_strategy: e.target.checked})} className="accent-accent w-4 h-4" />
                   <label htmlFor="editStrat" className="text-sm">Stratégie respectée</label>
                 </div>
               </>)}
-              <div><label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Notes</label>
+              <div><label className="field-label">Notes</label>
                 <textarea value={editForm.notes} onChange={e => setEditForm({...editForm, notes: e.target.value})} rows="2" placeholder="Notes..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-base focus:outline-none focus:border-accent resize-none" /></div>
               <div className="flex gap-3 pt-2">
-                <button type="submit" className="flex-1 bg-accent text-white font-bold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all">Sauvegarder</button>
+                <button type="submit" className="flex-1 bg-accent-strong hover:bg-accent text-white font-semibold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all">Sauvegarder</button>
                 <button type="button" onClick={() => setEditModal(null)} className="px-6 py-3 border border-brd text-txt-2 rounded-lg text-sm">Annuler</button>
               </div>
             </form>
@@ -462,10 +463,10 @@ export default function TradesPage() {
       {/* ============================================================ */}
       {showImport && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={() => { setShowImport(false); setImportData(null); setImportResult(null); }}>
-          <div className="bg-bg-card border border-brd rounded-xl p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="card p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-5">
               <div>
-                <h2 className="font-display font-bold text-lg">Import Tradovate</h2>
+                <h2 className="font-display font-semibold text-lg">Import Tradovate</h2>
                 <p className="text-txt-3 text-xs mt-0.5">Importe tes trades depuis un export CSV Tradovate</p>
               </div>
               <button onClick={() => { setShowImport(false); setImportData(null); setImportResult(null); }} className="w-8 h-8 rounded-lg border border-brd text-txt-3 hover:text-txt-1 hover:border-accent transition-all text-sm flex items-center justify-center">✕</button>
@@ -475,15 +476,15 @@ export default function TradesPage() {
             {importResult?.success && (
               <div className="bg-profit-dim border border-profit/20 rounded-xl p-4 mb-4 text-center">
                 <div className="text-2xl mb-2">✓</div>
-                <div className="font-bold text-profit">{importResult.count} trade{importResult.count > 1 ? 's' : ''} importé{importResult.count > 1 ? 's' : ''} !</div>
-                <button onClick={() => { setShowImport(false); setImportResult(null); }} className="mt-3 px-4 py-2 bg-profit text-white text-sm font-bold rounded-lg">Fermer</button>
+                <div className="font-semibold text-profit">{importResult.count} trade{importResult.count > 1 ? 's' : ''} importé{importResult.count > 1 ? 's' : ''} !</div>
+                <button onClick={() => { setShowImport(false); setImportResult(null); }} className="mt-3 px-4 py-2 bg-profit text-white text-sm font-semibold rounded-lg">Fermer</button>
               </div>
             )}
 
             {/* Error message */}
             {importResult?.success === false && (
               <div className="bg-loss-dim border border-loss/20 rounded-xl p-4 mb-4">
-                <div className="text-loss font-bold text-sm">❌ Erreur: {importResult.error}</div>
+                <div className="text-loss font-semibold text-sm">❌ Erreur: {importResult.error}</div>
               </div>
             )}
 
@@ -500,8 +501,8 @@ export default function TradesPage() {
                 <p className="font-semibold text-sm mb-1">Glisse ton fichier CSV ici</p>
                 <p className="text-txt-3 text-xs">ou clique pour sélectionner</p>
                 <div className="mt-4 pt-4 border-t border-brd">
-                  <p className="text-txt-3 text-[0.6rem] font-mono">Format attendu: export Tradovate "Performance"</p>
-                  <p className="text-txt-3 text-[0.6rem] font-mono">Colonnes: symbol, qty, pnl, boughtTimestamp, soldTimestamp, duration</p>
+                  <p className="text-txt-3 text-[0.7rem] font-mono">Format attendu: export Tradovate "Performance"</p>
+                  <p className="text-txt-3 text-[0.7rem] font-mono">Colonnes: symbol, qty, pnl, boughtTimestamp, soldTimestamp, duration</p>
                 </div>
               </div>
             )}
@@ -512,18 +513,18 @@ export default function TradesPage() {
                 {/* Summary */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-bg-secondary border border-brd rounded-lg p-3 text-center">
-                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">Trades</div>
-                    <div className="text-xl font-bold font-display">{importData.length}</div>
+                    <div className="eyebrow">Trades</div>
+                    <div className="text-xl font-semibold font-display">{importData.length}</div>
                   </div>
                   <div className="bg-bg-secondary border border-brd rounded-lg p-3 text-center">
-                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">P&L Total</div>
-                    <div className={`text-xl font-bold font-display font-mono ${importData.reduce((s, t) => s + t.pnl, 0) >= 0 ? 'text-profit' : 'text-loss'}`}>
+                    <div className="eyebrow">P&L Total</div>
+                    <div className={`text-xl font-semibold font-display font-mono ${importData.reduce((s, t) => s + t.pnl, 0) >= 0 ? 'text-profit' : 'text-loss'}`}>
                       {fmt(importData.reduce((s, t) => s + t.pnl, 0))}
                     </div>
                   </div>
                   <div className="bg-bg-secondary border border-brd rounded-lg p-3 text-center">
-                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">Win Rate</div>
-                    <div className={`text-xl font-bold font-display ${importData.length > 0 && (importData.filter(t => t.pnl > 0).length / importData.length * 100) >= 50 ? 'text-profit' : 'text-loss'}`}>
+                    <div className="eyebrow">Win Rate</div>
+                    <div className={`text-xl font-semibold font-display ${importData.length > 0 && (importData.filter(t => t.pnl > 0).length / importData.length * 100) >= 50 ? 'text-profit' : 'text-loss'}`}>
                       {importData.length > 0 ? (importData.filter(t => t.pnl > 0).length / importData.length * 100).toFixed(0) : 0}%
                     </div>
                   </div>
@@ -531,26 +532,26 @@ export default function TradesPage() {
 
                 {/* Destination */}
                 <div className="bg-accent-dim border border-accent/20 rounded-lg px-4 py-3 flex items-center gap-2">
-                  <span className="text-accent text-xs font-bold">→</span>
+                  <span className="text-accent text-xs font-semibold">→</span>
                   <span className="text-sm">Import vers <strong>{currentAccount?.name}</strong> ({currentAccount?.prop_firm})</span>
                 </div>
 
                 {/* Trade list preview */}
                 <div className="border border-brd rounded-xl overflow-hidden">
                   <div className="px-4 py-2.5 bg-bg-secondary border-b border-brd">
-                    <div className="text-[0.55rem] text-txt-3 font-mono uppercase tracking-wider">Aperçu des trades</div>
+                    <div className="eyebrow">Aperçu des trades</div>
                   </div>
                   <div className="divide-y divide-brd max-h-64 overflow-y-auto">
                     {importData.map((t, i) => (
                       <div key={i} className="px-4 py-2.5 flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm">{t.instrument || '?'}</span>
-                          <span className={`text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono ${t.type === 'LONG' ? 'bg-profit-dim text-profit' : 'bg-loss-dim text-loss'}`}>{t.type}</span>
+                          <span className={`text-[0.68rem] font-semibold px-1.5 py-0.5 rounded font-mono ${t.type === 'LONG' ? 'bg-profit-dim text-profit' : 'bg-loss-dim text-loss'}`}>{t.type}</span>
                           <span className="text-txt-3 text-xs font-mono">{new Date(t.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
-                          {t.size && <span className="text-txt-3 text-[0.55rem] font-mono">{t.size} cts</span>}
-                          {t.session && <span className={`text-[0.5rem] font-bold px-1 py-0.5 rounded font-mono ${t.session === 'london' ? 'bg-blue-500/15 text-blue-400' : 'bg-amber-500/15 text-amber-400'}`}>{t.session === 'london' ? '🇬🇧' : '🇺🇸'}</span>}
+                          {t.size && <span className="text-txt-3 text-[0.68rem] font-mono">{t.size} cts</span>}
+                          {t.session && <span className={`text-[0.65rem] font-semibold px-1 py-0.5 rounded font-mono ${t.session === 'london' ? 'bg-accent/15 text-accent' : 'bg-warn/15 text-warn'}`}>{t.session === 'london' ? '🇬🇧' : '🇺🇸'}</span>}
                         </div>
-                        <div className={`font-mono font-bold text-sm ${t.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(t.pnl)}</div>
+                        <div className={`font-mono font-semibold text-sm ${t.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(t.pnl)}</div>
                       </div>
                     ))}
                   </div>
@@ -559,7 +560,7 @@ export default function TradesPage() {
                 {/* Actions */}
                 <div className="flex gap-3">
                   <button onClick={submitImport} disabled={importing}
-                    className="flex-1 bg-accent text-white font-bold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all disabled:opacity-50">
+                    className="flex-1 bg-accent-strong hover:bg-accent text-white font-semibold py-3 rounded-lg shadow-lg shadow-accent/25 text-sm active:scale-95 transition-all disabled:opacity-50">
                     {importing ? 'Import en cours...' : `Importer ${importData.length} trade${importData.length > 1 ? 's' : ''}`}
                   </button>
                   <button onClick={() => { setImportData(null); }} className="px-6 py-3 border border-brd text-txt-2 rounded-lg text-sm">Annuler</button>

@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
+import { PageLoader } from '@/components/Brand';
 
-const COLORS = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#14b8a6'];
+const COLORS = ['#6366f1','#8b5cf6','#ec4899','var(--warn)','#10b981','#3b82f6','#ef4444','#14b8a6'];
 
 // ============================================================
 // SVG CHART COMPONENTS
@@ -31,7 +32,7 @@ function DonutChart({ winRate, size = 100, strokeWidth = 10 }) {
 
 function MiniEquityCurve({ trades, color, height = 60, width = 220 }) {
   if (!trades || trades.length < 2) {
-    return <div className="flex items-center justify-center text-txt-3 text-[0.6rem]" style={{ height }}>Pas assez de données</div>;
+    return <div className="flex items-center justify-center text-txt-3 text-[0.7rem]" style={{ height }}>Pas assez de données</div>;
   }
 
   const sorted = [...trades].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -144,7 +145,7 @@ function WinLossBar({ wins, losses }) {
         <div className="h-full rounded-l-full transition-all duration-500" style={{ width: `${winPct}%`, backgroundColor: 'var(--profit)' }} />
         <div className="h-full rounded-r-full transition-all duration-500" style={{ width: `${100 - winPct}%`, backgroundColor: 'var(--loss)' }} />
       </div>
-      <span className="text-[0.6rem] font-mono text-txt-3 w-14 text-right">{wins}W/{losses}L</span>
+      <span className="text-[0.7rem] font-mono text-txt-3 w-14 text-right">{wins}W/{losses}L</span>
     </div>
   );
 }
@@ -327,28 +328,28 @@ export default function StrategiesPage() {
   const selectedTrades = selectedId ? getStratTrades(selectedId) : getStratTrades('hors');
   const selectedStats = computeStats(selectedId === 'hors' ? getStratTrades('hors') : selectedId ? getStratTrades(selectedId) : []);
 
-  if (loading) return <div className="text-center py-20 text-txt-3">Chargement...</div>;
+  if (loading) return <PageLoader />;
 
   return (
     <div className="animate-fade-up max-w-6xl">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="font-display font-bold text-xl">Stratégies</h2>
+          <h2 className="font-display font-semibold text-xl">Stratégies</h2>
           <p className="text-txt-3 text-sm mt-0.5">Analyse tes performances par setup</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex bg-bg-secondary border border-brd rounded-lg overflow-hidden">
             <button onClick={() => setView('detail')}
-              className={`px-3 py-2 text-xs font-semibold transition-all ${view === 'detail' ? 'bg-accent text-white' : 'text-txt-2 hover:text-txt-1'}`}>
+              className={`px-3 py-2 text-xs font-semibold transition-all ${view === 'detail' ? 'bg-accent-strong hover:bg-accent text-white' : 'text-txt-2 hover:text-txt-1'}`}>
               Détail
             </button>
             <button onClick={() => setView('compare')}
-              className={`px-3 py-2 text-xs font-semibold transition-all ${view === 'compare' ? 'bg-accent text-white' : 'text-txt-2 hover:text-txt-1'}`}>
+              className={`px-3 py-2 text-xs font-semibold transition-all ${view === 'compare' ? 'bg-accent-strong hover:bg-accent text-white' : 'text-txt-2 hover:text-txt-1'}`}>
               Comparer
             </button>
           </div>
-          <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-accent text-white text-sm font-bold rounded-lg shadow-lg shadow-accent/25 active:scale-95 transition-all">
+          <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-accent-strong hover:bg-accent text-white text-sm font-semibold rounded-lg shadow-lg shadow-accent/25 active:scale-95 transition-all">
             + Stratégie
           </button>
         </div>
@@ -360,22 +361,22 @@ export default function StrategiesPage() {
       {view === 'compare' && (
         <div className="space-y-5">
           {allStrategiesData.length > 0 && (
-            <div className="bg-bg-card border border-brd rounded-xl p-5">
-              <h3 className="text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-4">Comparaison P&L par Stratégie</h3>
+            <div className="card p-5">
+              <h3 className="text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-4">Comparaison P&L par Stratégie</h3>
               <StrategyComparisonChart strategiesData={allStrategiesData} />
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {allStrategiesData.map(s => (
-              <div key={s.id} className="bg-bg-card border border-brd rounded-xl p-5 hover:border-brd-hover transition-all">
+              <div key={s.id} className="card p-5 hover:border-brd-hover transition-all">
                 <div className="flex items-center gap-2.5 mb-4">
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">{s.name}</div>
                     <div className="text-txt-3 text-xs">{s.nbTrades} trades</div>
                   </div>
-                  <div className={`text-base font-mono font-bold ${s.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                  <div className={`text-base font-mono font-semibold ${s.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
                     {s.nbTrades > 0 ? fmt(s.pnl) : '—'}
                   </div>
                 </div>
@@ -390,18 +391,18 @@ export default function StrategiesPage() {
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div className="text-center p-2 bg-bg-secondary rounded-lg">
-                        <div className="text-[0.5rem] text-txt-3 font-mono uppercase">Win Rate</div>
-                        <div className={`text-sm font-bold font-mono ${s.stats.winRate >= 50 ? 'text-profit' : 'text-loss'}`}>{s.stats.winRate.toFixed(0)}%</div>
+                        <div className="text-[0.65rem] text-txt-3 font-mono uppercase">Win Rate</div>
+                        <div className={`text-sm font-semibold font-mono ${s.stats.winRate >= 50 ? 'text-profit' : 'text-loss'}`}>{s.stats.winRate.toFixed(0)}%</div>
                       </div>
                       <div className="text-center p-2 bg-bg-secondary rounded-lg">
-                        <div className="text-[0.5rem] text-txt-3 font-mono uppercase">P. Factor</div>
-                        <div className={`text-sm font-bold font-mono ${s.stats.profitFactor >= 1.5 ? 'text-profit' : s.stats.profitFactor >= 1 ? 'text-amber-400' : 'text-loss'}`}>
+                        <div className="text-[0.65rem] text-txt-3 font-mono uppercase">P. Factor</div>
+                        <div className={`text-sm font-semibold font-mono ${s.stats.profitFactor >= 1.5 ? 'text-profit' : s.stats.profitFactor >= 1 ? 'text-warn' : 'text-loss'}`}>
                           {s.stats.profitFactor === Infinity ? '∞' : s.stats.profitFactor.toFixed(1)}
                         </div>
                       </div>
                       <div className="text-center p-2 bg-bg-secondary rounded-lg">
-                        <div className="text-[0.5rem] text-txt-3 font-mono uppercase">R:R Moy</div>
-                        <div className={`text-sm font-bold font-mono ${s.stats.avgRR >= 1 ? 'text-profit' : 'text-loss'}`}>
+                        <div className="text-[0.65rem] text-txt-3 font-mono uppercase">R:R Moy</div>
+                        <div className={`text-sm font-semibold font-mono ${s.stats.avgRR >= 1 ? 'text-profit' : 'text-loss'}`}>
                           {s.stats.avgRR !== 0 ? `${s.stats.avgRR.toFixed(1)}R` : '—'}
                         </div>
                       </div>
@@ -415,7 +416,7 @@ export default function StrategiesPage() {
           </div>
 
           {allStrategiesData.length === 0 && (
-            <div className="bg-bg-card border border-brd rounded-xl p-12 text-center text-txt-3">
+            <div className="card p-12 text-center text-txt-3">
               <div className="text-3xl mb-3 opacity-30">◬</div>
               <p>Crée des stratégies et associe-les à tes trades pour comparer</p>
             </div>
@@ -440,7 +441,7 @@ export default function StrategiesPage() {
                   <div className="font-semibold text-sm">Hors stratégie</div>
                   <div className="text-txt-3 text-xs">{getStratTrades('hors').length} trades</div>
                 </div>
-                <div className={`text-xs font-mono font-bold ${getStratTrades('hors').reduce((s,t) => s+parseFloat(t.pnl),0) >= 0 ? 'text-profit' : 'text-loss'}`}>
+                <div className={`text-xs font-mono font-semibold ${getStratTrades('hors').reduce((s,t) => s+parseFloat(t.pnl),0) >= 0 ? 'text-profit' : 'text-loss'}`}>
                   {getStratTrades('hors').length > 0 ? fmt(getStratTrades('hors').reduce((s,t) => s+parseFloat(t.pnl),0)) : '—'}
                 </div>
               </div>
@@ -458,7 +459,7 @@ export default function StrategiesPage() {
                       <div className="font-semibold text-sm truncate">{s.name}</div>
                       <div className="text-txt-3 text-xs">{sTrades.length} trades</div>
                     </div>
-                    <div className={`text-xs font-mono font-bold ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                    <div className={`text-xs font-mono font-semibold ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
                       {sTrades.length > 0 ? fmt(pnl) : '—'}
                     </div>
                   </div>
@@ -467,7 +468,7 @@ export default function StrategiesPage() {
             })}
 
             {strategies.length === 0 && (
-              <div className="text-center py-8 text-txt-3 text-sm bg-bg-card border border-brd rounded-xl">
+              <div className="text-center py-8 text-txt-3 text-sm card">
                 <div className="text-2xl mb-2">▦</div>
                 Crée ta première stratégie
               </div>
@@ -479,14 +480,14 @@ export default function StrategiesPage() {
             {selectedId !== null && (
               <div className="space-y-4">
                 {/* Header */}
-                <div className="bg-bg-card border border-brd rounded-xl p-5">
+                <div className="card p-5">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
                       {selectedId !== 'hors' && selectedStrat && (
                         <div className="w-4 h-4 rounded-full" style={{ backgroundColor: selectedStrat.color }} />
                       )}
                       <div>
-                        <h3 className="font-display font-bold text-lg">
+                        <h3 className="font-display font-semibold text-lg">
                           {selectedId === 'hors' ? 'Hors stratégie' : selectedStrat?.name}
                         </h3>
                         {selectedStrat?.description && (
@@ -497,7 +498,7 @@ export default function StrategiesPage() {
                     {selectedId !== 'hors' && selectedStrat && (
                       <div className="flex gap-2">
                         <button onClick={() => startEdit(selectedStrat)} className="px-3 py-1.5 border border-brd text-txt-2 rounded-lg text-xs hover:border-accent hover:text-accent transition-all">Éditer</button>
-                        <button onClick={() => deleteStrategy(selectedStrat.id)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${deleting === selectedStrat.id ? 'bg-loss text-white' : 'border border-brd text-loss'}`}>
+                        <button onClick={() => deleteStrategy(selectedStrat.id)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${deleting === selectedStrat.id ? 'bg-loss text-white' : 'border border-brd text-loss'}`}>
                           {deleting === selectedStrat.id ? 'Confirmer ?' : '×'}
                         </button>
                       </div>
@@ -505,11 +506,11 @@ export default function StrategiesPage() {
                   </div>
                   {selectedId !== 'hors' && selectedStrat?.conditions?.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-brd">
-                      <div className="text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-2">Conditions</div>
+                      <div className="eyebrow mb-2">Conditions</div>
                       <div className="space-y-1.5">
                         {selectedStrat.conditions.map((c, i) => (
                           <div key={i} className="flex items-start gap-2 text-sm">
-                            <span className="text-accent font-bold mt-0.5 flex-shrink-0">▸</span>
+                            <span className="text-accent font-semibold mt-0.5 flex-shrink-0">▸</span>
                             <span className="text-txt-2">{c}</span>
                           </div>
                         ))}
@@ -523,25 +524,25 @@ export default function StrategiesPage() {
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Donut */}
-                      <div className="bg-bg-card border border-brd rounded-xl p-4 flex flex-col items-center justify-center">
+                      <div className="card p-4 flex flex-col items-center justify-center">
                         <DonutChart winRate={selectedStats.winRate} size={110} strokeWidth={10} />
-                        <div className="flex items-center gap-3 mt-3 text-[0.6rem] font-mono text-txt-3">
+                        <div className="flex items-center gap-3 mt-3 text-[0.7rem] font-mono text-txt-3">
                           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-profit" />{selectedStats.wins}W</span>
                           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-loss" />{selectedStats.losses}L</span>
                         </div>
                       </div>
 
                       {/* Radar */}
-                      <div className="bg-bg-card border border-brd rounded-xl p-4 flex items-center justify-center">
+                      <div className="card p-4 flex items-center justify-center">
                         <PerformanceRadar stats={selectedStats} size={170} />
                       </div>
 
                       {/* Key Numbers */}
-                      <div className="bg-bg-card border border-brd rounded-xl p-4 space-y-3">
-                        <div className="text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider">Métriques clés</div>
+                      <div className="card p-4 space-y-3">
+                        <div className="eyebrow">Métriques clés</div>
                         {[
                           { label: 'P&L Total', value: fmt(selectedStats.totalPnl), color: selectedStats.totalPnl >= 0 ? 'text-profit' : 'text-loss' },
-                          { label: 'Profit Factor', value: selectedStats.profitFactor === Infinity ? '∞' : selectedStats.profitFactor.toFixed(2), color: selectedStats.profitFactor >= 1.5 ? 'text-profit' : selectedStats.profitFactor >= 1 ? 'text-amber-400' : 'text-loss' },
+                          { label: 'Profit Factor', value: selectedStats.profitFactor === Infinity ? '∞' : selectedStats.profitFactor.toFixed(2), color: selectedStats.profitFactor >= 1.5 ? 'text-profit' : selectedStats.profitFactor >= 1 ? 'text-warn' : 'text-loss' },
                           { label: 'Gain Moyen', value: selectedStats.avgWin > 0 ? fmt(selectedStats.avgWin) : '—', color: 'text-profit' },
                           { label: 'Perte Moyenne', value: selectedStats.avgLoss > 0 ? `-${selectedStats.avgLoss.toFixed(2)}€` : '—', color: 'text-loss' },
                           { label: 'R:R Moyen', value: selectedStats.avgRR !== 0 ? `${selectedStats.avgRR.toFixed(2)}R` : '—', color: selectedStats.avgRR >= 1 ? 'text-profit' : 'text-loss' },
@@ -550,15 +551,15 @@ export default function StrategiesPage() {
                         ].map(m => (
                           <div key={m.label} className="flex justify-between items-center">
                             <span className="text-xs text-txt-3">{m.label}</span>
-                            <span className={`font-mono font-bold text-sm ${m.color}`}>{m.value}</span>
+                            <span className={`font-mono font-semibold text-sm ${m.color}`}>{m.value}</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {/* Equity Curve */}
-                    <div className="bg-bg-card border border-brd rounded-xl p-4">
-                      <div className="text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider mb-2">Courbe de Progression</div>
+                    <div className="card p-4">
+                      <div className="eyebrow mb-2">Courbe de Progression</div>
                       <MiniEquityCurve
                         trades={selectedTrades}
                         color={selectedId === 'hors' ? '#6B7280' : selectedStrat?.color || '#6366f1'}
@@ -566,25 +567,25 @@ export default function StrategiesPage() {
                         width={600}
                       />
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-[0.55rem] text-txt-3 font-mono">{selectedTrades.length} trades</span>
-                        <span className={`text-xs font-mono font-bold ${selectedStats.totalPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(selectedStats.totalPnl)}</span>
+                        <span className="text-[0.68rem] text-txt-3 font-mono">{selectedTrades.length} trades</span>
+                        <span className={`text-xs font-mono font-semibold ${selectedStats.totalPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(selectedStats.totalPnl)}</span>
                       </div>
                     </div>
 
                     {/* Trade list */}
-                    <div className="bg-bg-card border border-brd rounded-xl overflow-hidden">
+                    <div className="card overflow-hidden">
                       <div className="px-4 py-3 border-b border-brd">
-                        <div className="text-[0.6rem] text-txt-3 font-mono uppercase tracking-wider">Trades récents</div>
+                        <div className="eyebrow">Trades récents</div>
                       </div>
                       <div className="divide-y divide-brd max-h-72 overflow-y-auto">
                         {selectedTrades.slice(0, 20).map(t => (
                           <div key={t.id} className="px-4 py-3 flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold text-sm">{t.instrument || '-'}</span>
-                              <span className={`text-[0.55rem] font-bold px-1.5 py-0.5 rounded font-mono ${t.type === 'LONG' ? 'bg-profit-dim text-profit' : 'bg-loss-dim text-loss'}`}>{t.type}</span>
+                              <span className={`text-[0.68rem] font-semibold px-1.5 py-0.5 rounded font-mono ${t.type === 'LONG' ? 'bg-profit-dim text-profit' : 'bg-loss-dim text-loss'}`}>{t.type}</span>
                               <span className="text-txt-3 text-xs font-mono">{new Date(t.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
                             </div>
-                            <div className={`font-mono font-bold text-sm ${parseFloat(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(t.pnl)}</div>
+                            <div className={`font-mono font-semibold text-sm ${parseFloat(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>{fmt(t.pnl)}</div>
                           </div>
                         ))}
                         {selectedTrades.length === 0 && (
@@ -594,7 +595,7 @@ export default function StrategiesPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="bg-bg-card border border-brd rounded-xl p-12 text-center text-txt-3">
+                  <div className="card p-12 text-center text-txt-3">
                     <div className="text-3xl mb-3 opacity-30">◈</div>
                     <p>Aucun trade associé à cette stratégie</p>
                     <p className="text-xs mt-1">Sélectionne cette stratégie lors de la saisie de tes trades</p>
@@ -604,7 +605,7 @@ export default function StrategiesPage() {
             )}
 
             {selectedId === null && (
-              <div className="bg-bg-card border border-brd rounded-xl p-12 text-center text-txt-3">
+              <div className="card p-12 text-center text-txt-3">
                 <div className="text-3xl mb-3 opacity-30">▦</div>
                 <p>Sélectionne une stratégie pour voir ses stats</p>
               </div>
@@ -616,19 +617,19 @@ export default function StrategiesPage() {
       {/* Modal création/édition */}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={resetForm}>
-          <div className="bg-bg-card border border-brd rounded-xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h2 className="font-display font-bold text-lg mb-5">{editingId ? 'Modifier la stratégie' : 'Nouvelle stratégie'}</h2>
+          <div className="card p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h2 className="font-display font-semibold text-lg mb-5">{editingId ? 'Modifier la stratégie' : 'Nouvelle stratégie'}</h2>
             <form onSubmit={submit} className="space-y-4">
               <div>
-                <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Nom de la stratégie</label>
+                <label className="field-label">Nom de la stratégie</label>
                 <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required placeholder="Ex: London Breakout, ICT OTE..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent" />
               </div>
               <div>
-                <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Description (optionnel)</label>
+                <label className="field-label">Description (optionnel)</label>
                 <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows="2" placeholder="Décris ton setup en quelques mots..." className="w-full bg-bg-secondary border border-brd rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent resize-none" />
               </div>
               <div>
-                <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-2">Couleur</label>
+                <label className="block text-[0.72rem] text-txt-3 font-semibold uppercase tracking-wider font-mono mb-2">Couleur</label>
                 <div className="flex gap-2 flex-wrap">
                   {COLORS.map(c => (
                     <button key={c} type="button" onClick={() => setForm({...form, color: c})}
@@ -638,7 +639,7 @@ export default function StrategiesPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-[0.65rem] text-txt-3 font-bold uppercase tracking-wider font-mono mb-1.5">Conditions / Règles</label>
+                <label className="field-label">Conditions / Règles</label>
                 <div className="space-y-2 mb-2">
                   {form.conditions.map((c, i) => (
                     <div key={i} className="flex items-center gap-2 bg-bg-secondary border border-brd rounded-lg px-3 py-2">
@@ -652,11 +653,11 @@ export default function StrategiesPage() {
                   <input type="text" value={newCondition} onChange={e => setNewCondition(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCondition())}
                     placeholder="Ex: Structure cassée en H1" className="flex-1 bg-bg-secondary border border-brd rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
-                  <button type="button" onClick={addCondition} className="px-3 py-2 bg-accent/20 text-accent border border-accent/30 rounded-lg text-sm font-bold hover:bg-accent/30 transition-all">+</button>
+                  <button type="button" onClick={addCondition} className="px-3 py-2 bg-accent/20 text-accent border border-accent/30 rounded-lg text-sm font-semibold hover:bg-accent/30 transition-all">+</button>
                 </div>
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="submit" className="flex-1 bg-accent text-white font-bold py-3 rounded-lg text-sm active:scale-95 transition-all shadow-lg shadow-accent/25">
+                <button type="submit" className="flex-1 bg-accent-strong hover:bg-accent text-white font-semibold py-3 rounded-lg text-sm active:scale-95 transition-all shadow-lg shadow-accent/25">
                   {editingId ? 'Sauvegarder' : 'Créer'}
                 </button>
                 <button type="button" onClick={resetForm} className="px-6 py-3 border border-brd text-txt-2 rounded-lg text-sm">Annuler</button>
